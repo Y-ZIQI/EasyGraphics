@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="core">
+      <UniqueIdentifier>{a3abf9af-0032-4408-9d9f-972c96381a1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="function">
+      <UniqueIdentifier>{ae369eae-b24c-4f47-a64d-a71966b798d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="platform">
+      <UniqueIdentifier>{b9b3f03b-cad9-4c00-8c47-e85a3135b480}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resource">
+      <UniqueIdentifier>{4a085e39-4f82-43e0-985d-65fe0218d2c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="function\render">
+      <UniqueIdentifier>{87b9136b-8eb4-4b2d-b5ab-7b24f211fd68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="function\render\rhi">
+      <UniqueIdentifier>{130a91b6-7be1-44f0-af6d-f32032a4edcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="function\render\rhi\vulkan">
+      <UniqueIdentifier>{5587dfe5-b995-4879-8d1c-66d8d89a5750}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="function\global">
+      <UniqueIdentifier>{8b5bd5fc-e7c8-499f-8c55-422aa0612b6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="platform\file_system">
+      <UniqueIdentifier>{0177c728-e352-42d4-9c30-71e53db26086}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resource\res_type">
+      <UniqueIdentifier>{14a9c2f5-80ef-4bee-bde7-fc9b56cfc41b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resource\res_type\data">
+      <UniqueIdentifier>{e839fbe3-5ddd-4393-bc91-1a8ab94a9a6e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\function\render\rhi\vulkan\vulkan_rhi.h">
+      <Filter>function\render\rhi\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\render\rhi\rhi.h">
+      <Filter>function\render\rhi</Filter>
+    </ClInclude>
+    <ClInclude Include="source\engine.h" />
+    <ClInclude Include="source\function\global\global.h">
+      <Filter>function\global</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\render\render_system.h">
+      <Filter>function\render</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\render\window_system.h">
+      <Filter>function\render</Filter>
+    </ClInclude>
+    <ClInclude Include="source\platform\file_system\file_system.h">
+      <Filter>platform\file_system</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\render\rhi\vulkan\vulkan_resource.h">
+      <Filter>function\render\rhi\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\render\rhi\vulkan\vulkan_util.h">
+      <Filter>function\render\rhi\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\render\render_resource.h">
+      <Filter>function\render</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\render\render_type.h">
+      <Filter>function\render</Filter>
+    </ClInclude>
+    <ClInclude Include="source\resource\res_type\data\mesh_data.h">
+      <Filter>resource\res_type\data</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\render\render_pipeline.h">
+      <Filter>function\render</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\render\render_pass.h">
+      <Filter>function\render</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\render\rhi\vulkan\vulkan_pipeline.h">
+      <Filter>function\render\rhi\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\render\rhi\vulkan\vulkan_pass.h">
+      <Filter>function\render\rhi\vulkan</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\engine.cpp" />
+    <ClCompile Include="source\function\render\rhi\vulkan\vulkan_rhi.cpp">
+      <Filter>function\render\rhi\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\global\global.cpp">
+      <Filter>function\global</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\render\render_system.cpp">
+      <Filter>function\render</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\render\window_system.cpp">
+      <Filter>function\render</Filter>
+    </ClCompile>
+    <ClCompile Include="source\platform\file_system\file_system.cpp">
+      <Filter>platform\file_system</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\render\rhi\vulkan\vulkan_resource.cpp">
+      <Filter>function\render\rhi\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\render\rhi\vulkan\vulkan_util.cpp">
+      <Filter>function\render\rhi\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\render\render_resource.cpp">
+      <Filter>function\render</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\render\render_pipeline.cpp">
+      <Filter>function\render</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\render\render_pass.cpp">
+      <Filter>function\render</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\render\rhi\vulkan\vulkan_pipeline.cpp">
+      <Filter>function\render\rhi\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\render\rhi\vulkan\vulkan_pass.cpp">
+      <Filter>function\render\rhi\vulkan</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
