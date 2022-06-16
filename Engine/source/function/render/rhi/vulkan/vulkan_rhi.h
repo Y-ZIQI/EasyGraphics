@@ -48,6 +48,7 @@ namespace Eagle
         VkSurfaceKHR        m_surface;
         VkPhysicalDevice    m_physical_device = VK_NULL_HANDLE;
         VkDevice            m_device = VK_NULL_HANDLE;
+        VkFormat            m_depth_image_format = VK_FORMAT_UNDEFINED;
         VkQueue             m_graphics_queue;
         VkQueue             m_present_queue;
         VkDebugUtilsMessengerEXT m_debug_messenger;
@@ -59,6 +60,10 @@ namespace Eagle
         std::vector<VkImageView>    m_swapchain_imageviews;
         std::vector<VkFramebuffer>  m_swapchain_framebuffers;
         uint32_t    m_current_swapchain_image_index;
+
+        VkImage        m_depth_image = VK_NULL_HANDLE;
+        VkDeviceMemory m_depth_image_memory = VK_NULL_HANDLE;
+        VkImageView    m_depth_image_view = VK_NULL_HANDLE;
 
         static uint8_t const            m_max_frames_in_flight;
         VkCommandPool                   m_command_pool;
@@ -116,6 +121,16 @@ namespace Eagle
 
         bool preRendering();
         bool postRendering();
+
+        // createImage & createImageView & findMemoryType are method used within vulkan.h/cpp, outside use VulkanUtil::* replaced
+        void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+        VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
+        uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+        
+        void createDepthResources();
+        VkFormat findDepthFormat();
+        VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+        bool hasStencilComponent(VkFormat format);
 
         VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
         VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
