@@ -11,11 +11,11 @@ namespace Eagle
 
 		m_render_resource = std::make_shared<RenderResource>();
 		m_render_resource->initialize({ m_rhi });
-		RenderMeshData mesh_data;
+		/*RenderMeshData mesh_data;
 		mesh_data = m_render_resource->loadMeshData(mesh);
 		RenderMaterialData material_data;
 		material_data = m_render_resource->loadMaterialData(texture_file);
-		m_render_resource->uploadMeshRenderResoucre(m_rhi, mesh_data, material_data);
+		m_render_resource->uploadMeshRenderResource(m_rhi, mesh_data, material_data);*/
 
 		m_render_pipeline = std::make_shared<RenderPipeline>();
 		RenderPipelineInitInfo pipeline_info{ m_rhi, m_render_resource };

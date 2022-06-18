@@ -53,6 +53,15 @@ namespace Eagle
 			uint32_t layout_count,
 			uint32_t miplevels
 		);
+		static void generateMipmaps(
+			VulkanRHI* rhi,
+			VkImage  image,
+			VkFormat image_format,
+			uint32_t texture_width,
+			uint32_t texture_height,
+			uint32_t layers,
+			uint32_t miplevels
+		);
 		static void transitionImageLayout(
 			VulkanRHI* rhi,
 			VkImage image,

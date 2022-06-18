@@ -1,5 +1,6 @@
 #pragma once
 
+#include "resource/asset/asset_manager.h"
 #include "function/render/window_system.h"
 #include "function/render/render_system.h"
 
@@ -12,6 +13,7 @@ namespace Eagle
 
 		void cleanup();
 
+		std::shared_ptr<AssetManager> m_asset_manager;
 		std::shared_ptr<WindowSystem> m_window_system;
 		std::shared_ptr<RenderSystem> m_render_system;
 	};

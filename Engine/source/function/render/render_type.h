@@ -80,7 +80,7 @@ namespace Eagle
         //float tx, ty, tz; // tangent
     };
 
-    typedef uint16_t MeshIndexDataDefinition;
+    typedef uint32_t MeshIndexDataDefinition;
 
     struct StaticMeshData
     {

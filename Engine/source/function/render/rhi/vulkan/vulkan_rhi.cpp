@@ -54,6 +54,7 @@ namespace Eagle
         createDepthResources();
         createCommandPool();
         createCommandBuffers();
+        createDescriptorPool();
         createSyncObjects();        
     }
 
@@ -114,6 +115,8 @@ namespace Eagle
         vkDeviceWaitIdle(m_device);
 
         cleanupSwapChain();
+
+        vkDestroyDescriptorPool(m_device, m_descriptor_pool, nullptr);
 
         for (size_t i = 0; i < m_max_frames_in_flight; i++) {
             vkDestroySemaphore(m_device, m_render_finished_semaphores[i], nullptr);
@@ -498,6 +501,35 @@ namespace Eagle
         vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
         return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+    }
+
+    void VulkanRHI::createDescriptorPool()
+    {
+        // TODO: figure out the proper size
+        VkDescriptorPoolSize pool_sizes[5];
+        pool_sizes[0].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+        pool_sizes[0].descriptorCount = 3 + 2 + 2 + 2 + 1 + 1 + 3 + 3;
+        pool_sizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        pool_sizes[1].descriptorCount = 1 + 1 + 1 * m_max_vertex_blending_mesh_count;
+        pool_sizes[2].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        pool_sizes[2].descriptorCount = 1 * m_max_material_count;
+        pool_sizes[3].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        pool_sizes[3].descriptorCount = 3 + 5 * m_max_material_count + 1 + 1; // ImGui_ImplVulkan_CreateDeviceObjects
+        pool_sizes[4].type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+        pool_sizes[4].descriptorCount = 4 + 1 + 1 + 2;
+
+        VkDescriptorPoolCreateInfo pool_info{};
+        pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pool_info.poolSizeCount = sizeof(pool_sizes) / sizeof(pool_sizes[0]);
+        pool_info.pPoolSizes = pool_sizes;
+        pool_info.maxSets =
+            1 + 1 + 1 + m_max_material_count + m_max_vertex_blending_mesh_count + 1 + 1; // +skybox + axis descriptor set
+        pool_info.flags = 0U;
+
+        if (vkCreateDescriptorPool(m_device, &pool_info, nullptr, &m_descriptor_pool) != VK_SUCCESS)
+        {
+            throw std::runtime_error("create descriptor pool");
+        }
     }
 
     bool VulkanRHI::checkDeviceExtensionSupport(VkPhysicalDevice device)

@@ -19,7 +19,6 @@ namespace Eagle
 		setupPipelines();
         setupFramebuffers();
         setupUniformBuffers();
-        setupDescriptorPool();
         setupDescriptorSets();
 	}
 
@@ -35,7 +34,7 @@ namespace Eagle
         proj[1][1] *= -1;
         MainPassVertUBO ubo{};
         ubo.proj_view_matrix = proj * view;
-        ubo.model_matrix = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.model_matrix = glm::rotate(glm::mat4(1.0f), 0.01f * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
         void* data;
         vkMapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[m_rhi->m_current_frame_index], 0, sizeof(ubo), 0, &data);
@@ -65,18 +64,23 @@ namespace Eagle
 
         updateUniformBuffer();
 
-        for (auto& pair : m_render_resource->m_render_meshes) {
-            VulkanMesh render_mesh = pair.second;
+        m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 0, 1, &m_descriptors[0].descriptor_set, 0, nullptr);
 
-            VkBuffer vertexBuffers[] = { render_mesh.mesh_vertex_buffer };
-            VkDeviceSize offsets[] = { 0 };
-            m_rhi->m_vk_cmd_bind_vertex_buffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-            m_rhi->m_vk_cmd_bind_index_buffer(commandBuffer, render_mesh.mesh_index_buffer, 0, VK_INDEX_TYPE_UINT16);
-            //m_rhi->m_vk_cmd_bind_index_buffer(commandBuffer, render_mesh.mesh_index_buffer, 0, VK_INDEX_TYPE_UINT32);
+        for (auto& pair : m_render_resource->m_material_meshes) {
+            auto& material = m_render_resource->m_render_materials[pair.first];
+            auto& mesh_set = pair.second;
 
-            m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 0, 1, &m_descriptors[0].descriptor_sets[m_rhi->m_current_frame_index], 0, nullptr);
+            m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 1, 1, &material.material_descriptor_set, 0, nullptr);
 
-            m_rhi->m_vk_cmd_draw_indexed(commandBuffer, render_mesh.mesh_index_count, 1, 0, 0, 0);
+            for (auto& mesh_id : mesh_set) {
+                VulkanMesh& render_mesh = m_render_resource->m_render_meshes[mesh_id];
+                VkBuffer vertexBuffers[] = { render_mesh.mesh_vertex_buffer };
+                VkDeviceSize offsets[] = { 0 };
+                m_rhi->m_vk_cmd_bind_vertex_buffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+                m_rhi->m_vk_cmd_bind_index_buffer(commandBuffer, render_mesh.mesh_index_buffer, 0, VK_INDEX_TYPE_UINT32);
+
+                m_rhi->m_vk_cmd_draw_indexed(commandBuffer, render_mesh.mesh_index_count, 1, 0, 0, 0);
+            }
         }
 
         m_rhi->m_vk_cmd_end_render_pass(commandBuffer);
@@ -99,9 +103,8 @@ namespace Eagle
             vkDestroyBuffer(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers[i], nullptr);
             vkFreeMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[i], nullptr);
         }
-        vkDestroyDescriptorPool(m_rhi->m_device, m_descriptors[0].descriptor_pool, nullptr);
         vkDestroyDescriptorSetLayout(m_rhi->m_device, m_descriptors[0].layout, nullptr);
-
+        vkDestroyDescriptorSetLayout(m_rhi->m_device, m_descriptors[1].layout, nullptr);
 	}
 
 	void VulkanPass::setupRenderPass()
@@ -165,30 +168,53 @@ namespace Eagle
 
     void VulkanPass::setupDescriptorSetLayout()
     {
-        m_descriptors.resize(1);
+        m_descriptors.resize(2);
 
-        VkDescriptorSetLayoutBinding uboLayoutBinding{};
-        uboLayoutBinding.binding = 0;
-        uboLayoutBinding.descriptorCount = 1;
-        uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        uboLayoutBinding.pImmutableSamplers = nullptr;
-        uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        {
+            VkDescriptorSetLayoutBinding uboLayoutBinding{};
+            uboLayoutBinding.binding = 0;
+            uboLayoutBinding.descriptorCount = 1;
+            uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            uboLayoutBinding.pImmutableSamplers = nullptr;
+            uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-        VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-        samplerLayoutBinding.binding = 1;
-        samplerLayoutBinding.descriptorCount = 1;
-        samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        samplerLayoutBinding.pImmutableSamplers = nullptr;
-        samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            VkDescriptorSetLayoutCreateInfo layoutInfo{};
+            std::array<VkDescriptorSetLayoutBinding, 1> bindings = { uboLayoutBinding };
+            layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+            layoutInfo.pBindings = bindings.data();
 
-        std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
-        VkDescriptorSetLayoutCreateInfo layoutInfo{};
-        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-        layoutInfo.pBindings = bindings.data();
+            if (vkCreateDescriptorSetLayout(m_rhi->m_device, &layoutInfo, nullptr, &m_descriptors[0].layout) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create descriptor set layout!");
+            }
+        }
 
-        if (vkCreateDescriptorSetLayout(m_rhi->m_device, &layoutInfo, nullptr, &m_descriptors[0].layout) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create descriptor set layout!");
+        {
+            VkDescriptorSetLayoutBinding uboLayoutBinding{};
+            uboLayoutBinding.binding = 0;
+            uboLayoutBinding.descriptorCount = 1;
+            uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            uboLayoutBinding.pImmutableSamplers = nullptr;
+            uboLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+            VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+            samplerLayoutBinding.binding = 1;
+            samplerLayoutBinding.descriptorCount = 1;
+            samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            samplerLayoutBinding.pImmutableSamplers = nullptr;
+            samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+            VkDescriptorSetLayoutCreateInfo layoutInfo{};
+            std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+            layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+            layoutInfo.pBindings = bindings.data();
+
+            if (vkCreateDescriptorSetLayout(m_rhi->m_device, &layoutInfo, nullptr, &m_descriptors[1].layout) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create descriptor set layout!");
+            }
+            // DescriptorSetLayout pointers for render resource
+            m_render_resource->m_material_descriptor_set_layout = &m_descriptors[1].layout;
         }
     }
 
@@ -310,8 +336,9 @@ namespace Eagle
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 1;
-        pipelineLayoutInfo.pSetLayouts = &m_descriptors[0].layout;
+        pipelineLayoutInfo.setLayoutCount = 2;
+        std::vector<VkDescriptorSetLayout> buf = { m_descriptors[0].layout , m_descriptors[1].layout };
+        pipelineLayoutInfo.pSetLayouts = buf.data();
 
         if (vkCreatePipelineLayout(m_rhi->m_device, &pipelineLayoutInfo, nullptr, &m_render_pipelines[0].layout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
@@ -388,40 +415,15 @@ namespace Eagle
         }
     }
 
-    void VulkanPass::setupDescriptorPool()
-    {
-        VkDescriptorPoolSize poolSize{};
-        poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        poolSize.descriptorCount = static_cast<uint32_t>(m_rhi->m_max_frames_in_flight);
-
-        std::array<VkDescriptorPoolSize, 2> poolSizes{};
-        poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        poolSizes[0].descriptorCount = static_cast<uint32_t>(m_rhi->m_max_frames_in_flight);
-        poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        poolSizes[1].descriptorCount = static_cast<uint32_t>(m_rhi->m_max_frames_in_flight);
-
-        VkDescriptorPoolCreateInfo poolInfo{};
-        poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-        poolInfo.pPoolSizes = poolSizes.data();
-        poolInfo.maxSets = static_cast<uint32_t>(m_rhi->m_max_frames_in_flight);
-
-        if (vkCreateDescriptorPool(m_rhi->m_device, &poolInfo, nullptr, &m_descriptors[0].descriptor_pool) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create descriptor pool!");
-        }
-    }
-
     void VulkanPass::setupDescriptorSets()
     {
-        std::vector<VkDescriptorSetLayout> layouts(m_rhi->m_max_frames_in_flight, m_descriptors[0].layout);
         VkDescriptorSetAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = m_descriptors[0].descriptor_pool;
-        allocInfo.descriptorSetCount = static_cast<uint32_t>(m_rhi->m_max_frames_in_flight);
-        allocInfo.pSetLayouts = layouts.data();
+        allocInfo.descriptorPool = m_rhi->m_descriptor_pool;
+        allocInfo.descriptorSetCount = 1;
+        allocInfo.pSetLayouts = &m_descriptors[0].layout;
 
-        m_descriptors[0].descriptor_sets.resize(m_rhi->m_max_frames_in_flight);
-        if (vkAllocateDescriptorSets(m_rhi->m_device, &allocInfo, m_descriptors[0].descriptor_sets.data()) != VK_SUCCESS) {
+        if (vkAllocateDescriptorSets(m_rhi->m_device, &allocInfo, &m_descriptors[0].descriptor_set) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate descriptor sets!");
         }
 
@@ -431,36 +433,16 @@ namespace Eagle
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(MainPassVertUBO);
 
-            VkDescriptorImageInfo imageInfo{};
-            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;            
-            imageInfo.imageView = m_render_resource->m_render_materials[0].base_color_image_view; // Should modified
-            //imageInfo.sampler = VulkanUtil::getLinearSampler(m_rhi->m_physical_device, m_rhi->m_device);
-            imageInfo.sampler = VulkanUtil::getMipmapSampler(
-                m_rhi->m_physical_device, 
-                m_rhi->m_device,
-                m_render_resource->m_render_materials[0].desc.width,
-                m_render_resource->m_render_materials[0].desc.height
-            );
+            VkWriteDescriptorSet descriptorWrites{};
+            descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites.dstSet = m_descriptors[0].descriptor_set;
+            descriptorWrites.dstBinding = 0;
+            descriptorWrites.dstArrayElement = 0;
+            descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrites.descriptorCount = 1;
+            descriptorWrites.pBufferInfo = &bufferInfo;
 
-            std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
-
-            descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[0].dstSet = m_descriptors[0].descriptor_sets[i];
-            descriptorWrites[0].dstBinding = 0;
-            descriptorWrites[0].dstArrayElement = 0;
-            descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorWrites[0].descriptorCount = 1;
-            descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-            descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[1].dstSet = m_descriptors[0].descriptor_sets[i];
-            descriptorWrites[1].dstBinding = 1;
-            descriptorWrites[1].dstArrayElement = 0;
-            descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptorWrites[1].descriptorCount = 1;
-            descriptorWrites[1].pImageInfo = &imageInfo;
-
-            vkUpdateDescriptorSets(m_rhi->m_device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+            vkUpdateDescriptorSets(m_rhi->m_device, 1, &descriptorWrites, 0, nullptr);
         }
     }
 

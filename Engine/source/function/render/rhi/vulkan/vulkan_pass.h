@@ -28,7 +28,6 @@ namespace Eagle
 		void setupPipelines();
 		void setupFramebuffers();
 		void setupUniformBuffers();
-		void setupDescriptorPool();
 		void setupDescriptorSets();
 
 		void updateRecreateSwapChain();
@@ -41,9 +40,8 @@ namespace Eagle
 
 		struct VulkanDescriptor
 		{
-			VkDescriptorSetLayout			layout;
-			VkDescriptorPool				descriptor_pool;
-			std::vector<VkDescriptorSet>	descriptor_sets;
+			VkDescriptorSetLayout	layout;
+			VkDescriptorSet			descriptor_set;
 		};
 
 		struct VulkanUniformBuffer

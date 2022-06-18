@@ -69,6 +69,11 @@ namespace Eagle
         VkCommandPool                   m_command_pool;
         std::vector<VkCommandBuffer>    m_command_buffers;
 
+        VkDescriptorPool m_descriptor_pool;
+        // used in descriptor pool creation
+        uint32_t m_max_vertex_blending_mesh_count = 256;
+        uint32_t m_max_material_count = 256;
+
         std::vector<VkSemaphore>    m_image_available_semaphores;
         std::vector<VkSemaphore>    m_render_finished_semaphores;
         std::vector<VkFence>        m_in_flight_fences;
@@ -117,6 +122,7 @@ namespace Eagle
         void createImageViews();
         void createCommandPool();
         void createCommandBuffers();
+        void createDescriptorPool();
         void createSyncObjects();
 
         bool preRendering();

@@ -13,6 +13,7 @@
 #include <array>
 #include <vector>
 #include <map>
+#include <set>
 
 namespace Eagle
 {
@@ -87,6 +88,21 @@ namespace Eagle
     //    VkBuffer      mesh_index_buffer;
     //    VmaAllocation mesh_index_buffer_allocation;
     //};
+
+    struct MeshPerMaterialUniformBufferObject
+    {
+        glm::vec4 baseColorFactor{ 0.0f, 0.0f, 0.0f, 0.0f };
+
+        /*float metallicFactor = 0.0f;
+        float roughnessFactor = 0.0f;
+        float normalScale = 0.0f;
+        float occlusionStrength = 0.0f;
+
+        glm::vec3  emissiveFactor = { 0.0f, 0.0f, 0.0f };
+        uint32_t is_blend = 0;
+        uint32_t is_double_sided = 0;*/
+    };
+
     struct VulkanMesh
     {
         uint32_t mesh_vertex_count;
@@ -129,10 +145,10 @@ namespace Eagle
         //VkImageView   emissive_image_view = VK_NULL_HANDLE;
         //VmaAllocation emissive_image_allocation;
 
-        //VkBuffer      material_uniform_buffer;
-        //VmaAllocation material_uniform_buffer_allocation;
+        VkBuffer        material_uniform_buffer;
+        VkDeviceMemory  material_uniform_buffer_memory;
 
-        //VkDescriptorSet material_descriptor_set;
+        VkDescriptorSet material_descriptor_set;
     };
 
     struct RenderResourceInitInfo
@@ -166,6 +182,10 @@ namespace Eagle
         std::map<uint32_t, VulkanMesh> m_render_meshes;
         std::map<uint32_t, VulkanPBRMaterial> m_render_materials;
 
-        VkSampler m_texture_sampler;
+        std::map<uint32_t, std::set<uint32_t>> m_material_meshes;
+
+        // descriptor set layout in main camera pass will be used when uploading resource
+        const VkDescriptorSetLayout* m_mesh_descriptor_set_layout = nullptr;
+        const VkDescriptorSetLayout* m_material_descriptor_set_layout = nullptr;
     };
 }

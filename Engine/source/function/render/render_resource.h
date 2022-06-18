@@ -9,8 +9,10 @@
 
 namespace Eagle
 {
-	extern const MeshData mesh;
-	extern const std::string texture_file;
+	//extern const MeshData mesh;
+	//extern const std::string texture_file;
+	//extern const std::string model_path;
+	//extern const std::string texture_path;
 
 	class RenderResource : public RHIRenderResource
 	{
@@ -18,7 +20,8 @@ namespace Eagle
 		RenderResource() {};
 		~RenderResource() {};
 
-		void uploadMeshRenderResoucre(std::shared_ptr<RHI> rhi, RenderMeshData mesh_data, RenderMaterialData material_data);
+		void uploadMeshRenderResource(std::shared_ptr<RHI> rhi, RenderMeshData mesh_data, RenderMaterialData material_data);
 
+		void loadObjWithTexture(std::shared_ptr<MeshData> mesh_data, const std::string tex_file);
 	};
 }

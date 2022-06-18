@@ -23,7 +23,7 @@ namespace Eagle
 		void tick();
 		void cleanup();
 
-	private:
+	//private:
 		std::shared_ptr<RHI> m_rhi;
 
 		std::shared_ptr<RenderResource> m_render_resource;

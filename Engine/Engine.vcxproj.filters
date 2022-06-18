@@ -34,6 +34,9 @@
     <Filter Include="resource\res_type\data">
       <UniqueIdentifier>{e839fbe3-5ddd-4393-bc91-1a8ab94a9a6e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="resource\asset">
+      <UniqueIdentifier>{567710b1-92b6-4e9c-9528-b267b20b827f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\function\render\rhi\vulkan\vulkan_rhi.h">
@@ -82,6 +85,9 @@
     <ClInclude Include="source\function\render\rhi\vulkan\vulkan_pass.h">
       <Filter>function\render\rhi\vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="source\resource\asset\asset_manager.h">
+      <Filter>resource\asset</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\engine.cpp" />
@@ -120,6 +126,9 @@
     </ClCompile>
     <ClCompile Include="source\function\render\rhi\vulkan\vulkan_pass.cpp">
       <Filter>function\render\rhi\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="source\resource\asset\asset_manager.cpp">
+      <Filter>resource\asset</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
