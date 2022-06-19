@@ -2,6 +2,10 @@
 
 #include "resource/res_type/data/mesh_data.h"
 
+#include <assimp/Importer.hpp>
+//#include <assimp/scene.h>
+//#include <assimp/postprocess.h>
+
 #include <memory>
 #include <string>
 #include <unordered_map>
