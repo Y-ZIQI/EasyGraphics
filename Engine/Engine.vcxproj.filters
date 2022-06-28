@@ -37,6 +37,12 @@
     <Filter Include="resource\asset">
       <UniqueIdentifier>{567710b1-92b6-4e9c-9528-b267b20b827f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="resource\shader">
+      <UniqueIdentifier>{0c51dc99-2a24-4257-a891-80207130b0b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="function\world">
+      <UniqueIdentifier>{475a7f25-0564-4443-828d-dc178e3a26fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\function\render\rhi\vulkan\vulkan_rhi.h">
@@ -88,6 +94,24 @@
     <ClInclude Include="source\resource\asset\asset_manager.h">
       <Filter>resource\asset</Filter>
     </ClInclude>
+    <ClInclude Include="source\resource\shader\shader_manager.h">
+      <Filter>resource\shader</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\global\global_resource.h">
+      <Filter>function\global</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\world\world_manager.h">
+      <Filter>function\world</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\world\scene.h">
+      <Filter>function\world</Filter>
+    </ClInclude>
+    <ClInclude Include="source\resource\res_type\data\material.h">
+      <Filter>resource\res_type\data</Filter>
+    </ClInclude>
+    <ClInclude Include="source\resource\res_type\data\camera.h">
+      <Filter>resource\res_type\data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\engine.cpp" />
@@ -129,6 +153,18 @@
     </ClCompile>
     <ClCompile Include="source\resource\asset\asset_manager.cpp">
       <Filter>resource\asset</Filter>
+    </ClCompile>
+    <ClCompile Include="source\resource\shader\shader_manager.cpp">
+      <Filter>resource\shader</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\global\global_resource.cpp">
+      <Filter>function\global</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\world\world_manager.cpp">
+      <Filter>function\world</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\world\scene.cpp">
+      <Filter>function\world</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

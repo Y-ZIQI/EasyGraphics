@@ -21,6 +21,13 @@ namespace Eagle
 		}
 	};
 
+	class Transform
+	{
+	public:
+		glm::mat4 transform;
+		glm::mat3 n_transform;
+	};
+
 	class Vertex
 	{
 	public:
@@ -36,7 +43,26 @@ namespace Eagle
 	class MeshData
 	{
 	public:
+		struct AABB {
+			glm::vec3 minB, maxB; // min and max bound for XYZ
+			glm::vec3 center;
+			glm::vec3 points[8];
+		};
+
+		void setAABB(glm::vec3 minB, glm::vec3 maxB) {
+			aabb = { minB, maxB, glm::vec3(0.5f, 0.5f, 0.5f) * (minB + maxB) };
+			aabb.points[0] = aabb.minB;
+			aabb.points[1] = glm::vec3(aabb.minB[0], aabb.minB[1], aabb.maxB[2]);
+			aabb.points[2] = glm::vec3(aabb.minB[0], aabb.maxB[1], aabb.minB[2]);
+			aabb.points[3] = glm::vec3(aabb.minB[0], aabb.maxB[1], aabb.maxB[2]);
+			aabb.points[4] = glm::vec3(aabb.maxB[0], aabb.minB[1], aabb.minB[2]);
+			aabb.points[5] = glm::vec3(aabb.maxB[0], aabb.minB[1], aabb.maxB[2]);
+			aabb.points[6] = glm::vec3(aabb.maxB[0], aabb.maxB[1], aabb.minB[2]);
+			aabb.points[7] = aabb.maxB;
+		}
+
 		std::vector<Vertex> vertex_buffer;
 		std::vector<int> index_buffer;
+		AABB aabb;
 	};
 }

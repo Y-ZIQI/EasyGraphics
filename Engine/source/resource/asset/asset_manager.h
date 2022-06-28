@@ -2,10 +2,13 @@
 
 #include "resource/res_type/data/mesh_data.h"
 
-#include <assimp/Importer.hpp>
-//#include <assimp/scene.h>
-//#include <assimp/postprocess.h>
+#include "function/world/scene.h"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+#include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -28,7 +31,11 @@ namespace Eagle
 
 		std::shared_ptr<MeshData> loadStaticMesh(const std::string& model_path);
 
+		void loadScene(const std::string& scene_path, std::shared_ptr<Scene> n_scene);
+
 	private:
+		void processNode(aiNode* node, glm::mat4 transform, std::shared_ptr<Scene> n_scene);
+		
 		Importer m_importer;
 	};
 }

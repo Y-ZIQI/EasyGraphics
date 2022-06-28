@@ -5,7 +5,7 @@
 
 namespace Eagle
 {
-	struct RenderPassInitInfo
+	struct VulkanPassInitInfo
 	{
 		std::shared_ptr<VulkanRHI> rhi;
 		std::shared_ptr<VulkanRenderResource> render_resource;
@@ -17,7 +17,7 @@ namespace Eagle
 		VulkanPass() {};
 		~VulkanPass() {};
 
-		void initialize(RenderPassInitInfo init_info);
+		void initialize(VulkanPassInitInfo init_info);
 		void updateUniformBuffer();
 		void draw();
 		void cleanupSwapChain();
@@ -54,6 +54,7 @@ namespace Eagle
 		std::vector<VulkanPipelineBase>	m_render_pipelines;
 		std::vector<VulkanDescriptor>	m_descriptors;
 
+		MainPassVertUBO					m_vert_ubo;
 		std::vector<VulkanUniformBuffer> m_uniform_buffers;
 
 		std::shared_ptr<VulkanRHI>				m_rhi;

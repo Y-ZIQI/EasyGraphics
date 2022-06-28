@@ -112,6 +112,7 @@ namespace Eagle
         VkBuffer mesh_index_buffer;
         VkDeviceMemory mesh_index_buffer_memory;
     };
+
     // material
     struct VulkanPBRMaterialDesc {
         uint32_t width;
@@ -168,8 +169,8 @@ namespace Eagle
         VulkanPBRMaterial createPBRMaterial(RenderMaterialData material_data);
 
         RenderMeshData loadMeshData(const MeshData& source);
-        std::shared_ptr<TextureData> loadTexture(const std::string& file, bool is_srgb);
-        RenderMaterialData loadMaterialData(const std::string& tex_file);
+        std::shared_ptr<TextureData> loadTexture(const std::string& file, bool is_srgb, bool vflip);
+        RenderMaterialData loadMaterialData(const std::string& tex_file, bool vflip);
 
         void cleanup();
 

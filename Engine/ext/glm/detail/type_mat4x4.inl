@@ -599,6 +599,7 @@ namespace glm
 
 	template <typename T, precision P>
 	GLM_FUNC_QUALIFIER tmat4x4<T, P> operator*(tmat4x4<T, P> const & m1, tmat4x4<T, P> const & m2)
+
 	{
 		typename tmat4x4<T, P>::col_type const SrcA0 = m1[0];
 		typename tmat4x4<T, P>::col_type const SrcA1 = m1[1];

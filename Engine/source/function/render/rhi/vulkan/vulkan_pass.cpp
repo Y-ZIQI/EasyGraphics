@@ -1,3 +1,5 @@
+#include "function/global/global_resource.h"
+
 #include "function/render/rhi/vulkan/vulkan_pass.h"
 
 #define GLM_FORCE_RADIANS
@@ -6,10 +8,7 @@
 
 namespace Eagle
 {
-    const char* vert_shader_path = "../Engine/shaders/compiled/vert.spv";
-    const char* frag_shader_path = "../Engine/shaders/compiled/frag.spv";
-
-	void VulkanPass::initialize(RenderPassInitInfo init_info)
+	void VulkanPass::initialize(VulkanPassInitInfo init_info)
 	{
 		m_rhi = init_info.rhi;
 		m_render_resource = init_info.render_resource;
@@ -24,21 +23,9 @@ namespace Eagle
 
     void VulkanPass::updateUniformBuffer()
     {
-        static auto startTime = std::chrono::high_resolution_clock::now();
-
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-        auto view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        auto proj = glm::perspective(glm::radians(45.0f), m_rhi->m_swapchain_extent.width / (float)m_rhi->m_swapchain_extent.height, 0.1f, 10.0f);
-        proj[1][1] *= -1;
-        MainPassVertUBO ubo{};
-        ubo.proj_view_matrix = proj * view;
-        ubo.model_matrix = glm::rotate(glm::mat4(1.0f), 0.01f * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-
         void* data;
-        vkMapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[m_rhi->m_current_frame_index], 0, sizeof(ubo), 0, &data);
-        memcpy(data, &ubo, sizeof(ubo));
+        vkMapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[m_rhi->m_current_frame_index], 0, sizeof(m_vert_ubo), 0, &data);
+        memcpy(data, &m_vert_ubo, sizeof(m_vert_ubo));
         vkUnmapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[m_rhi->m_current_frame_index]);
     }
 
@@ -62,8 +49,13 @@ namespace Eagle
         m_rhi->m_vk_cmd_begin_render_pass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         m_rhi->m_vk_cmd_bind_pipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].pipeline);
 
+        // TODO: need update
+        static auto startTime = std::chrono::high_resolution_clock::now();
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+        m_vert_ubo.model_matrix = glm::rotate(glm::mat4(1.0f), 0.01f * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        // ---
         updateUniformBuffer();
-
         m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 0, 1, &m_descriptors[0].descriptor_set, 0, nullptr);
 
         for (auto& pair : m_render_resource->m_material_meshes) {
@@ -73,6 +65,7 @@ namespace Eagle
             m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 1, 1, &material.material_descriptor_set, 0, nullptr);
 
             for (auto& mesh_id : mesh_set) {
+
                 VulkanMesh& render_mesh = m_render_resource->m_render_meshes[mesh_id];
                 VkBuffer vertexBuffers[] = { render_mesh.mesh_vertex_buffer };
                 VkDeviceSize offsets[] = { 0 };
@@ -222,8 +215,8 @@ namespace Eagle
 	{
         m_render_pipelines.resize(1);
 
-        auto vertShaderCode = FileSystem::readFile(vert_shader_path);
-        auto fragShaderCode = FileSystem::readFile(frag_shader_path);
+        auto vertShaderCode = FileSystem::readFile(g_global_resource.m_shaders->vert_shader_path);
+        auto fragShaderCode = FileSystem::readFile(g_global_resource.m_shaders->frag_shader_path);
 
         VkShaderModule vertShaderModule = VulkanUtil::createShaderModule(m_rhi->m_device, vertShaderCode);
         VkShaderModule fragShaderModule = VulkanUtil::createShaderModule(m_rhi->m_device, fragShaderCode);

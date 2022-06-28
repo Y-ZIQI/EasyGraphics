@@ -4,6 +4,7 @@ namespace Eagle
 {
 	void EagleEngine::initialize()
 	{
+		g_global_resource.initialize();
 		g_global_context.initialize();
 	}
 
@@ -17,6 +18,7 @@ namespace Eagle
 
 	void EagleEngine::cleanup()
 	{
+		g_global_resource.cleanup();
 		g_global_context.cleanup();
 	}
 }

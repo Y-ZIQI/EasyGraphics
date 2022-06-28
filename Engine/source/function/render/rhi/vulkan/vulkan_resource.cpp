@@ -244,11 +244,12 @@ namespace Eagle
         return ret;
     }
 
-    std::shared_ptr<TextureData> VulkanRenderResource::loadTexture(const std::string& file, bool is_srgb)
+    std::shared_ptr<TextureData> VulkanRenderResource::loadTexture(const std::string& file, bool is_srgb, bool vflip)
     {
         std::shared_ptr<TextureData> texture = std::make_shared<TextureData>();
 
         int iw, ih, n;
+        stbi_set_flip_vertically_on_load(vflip);
         texture->m_pixels = stbi_load(file.c_str(), &iw, &ih, &n, 4);
 
         if (!texture->m_pixels)
@@ -266,10 +267,10 @@ namespace Eagle
         return texture;
     }
 
-    RenderMaterialData VulkanRenderResource::loadMaterialData(const std::string& tex_file)
+    RenderMaterialData VulkanRenderResource::loadMaterialData(const std::string& tex_file, bool vflip)
     {
         RenderMaterialData ret;
-        ret.m_base_color_texture = loadTexture(tex_file, true);
+        ret.m_base_color_texture = loadTexture(tex_file, true, vflip);
         return ret;
     }
 

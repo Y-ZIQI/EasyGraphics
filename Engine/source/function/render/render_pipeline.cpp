@@ -6,7 +6,7 @@ namespace Eagle
 	{
 		m_rhi = init_info.rhi;
 
-		m_main_pass = std::make_shared<RHIRenderPass>();
+		m_main_pass = std::make_shared<RenderPass>();
 		m_main_pass->initialize({ init_info.rhi, init_info.render_resource });
 	}
 
@@ -16,6 +16,7 @@ namespace Eagle
 		if (recreate_swapchain) {
 			return true;
 		}
+		m_main_pass->updateUniforms();
 		m_main_pass->draw();
 		recreate_swapchain = m_rhi->postRendering();
 		return recreate_swapchain;

@@ -3,6 +3,8 @@
 #include "function/render/rhi/rhi.h"
 #include "function/render/render_type.h"
 
+#include "function/world/scene.h"
+
 #include "resource/res_type/data/mesh_data.h"
 
 #include <string>
@@ -20,8 +22,14 @@ namespace Eagle
 		RenderResource() {};
 		~RenderResource() {};
 
-		void uploadMeshRenderResource(std::shared_ptr<RHI> rhi, RenderMeshData mesh_data, RenderMaterialData material_data);
+		void initialize(RenderResourceInitInfo init_info);
+		void cleanup();
+
+		void uploadMeshRenderResource(RenderMeshData mesh_data, RenderMaterialData material_data);
+		void uploadScene(std::shared_ptr<Scene> scene);
 
 		void loadObjWithTexture(std::shared_ptr<MeshData> mesh_data, const std::string tex_file);
+
+		std::shared_ptr<Scene> m_current_scene;
 	};
 }
