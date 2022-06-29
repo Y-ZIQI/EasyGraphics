@@ -48,13 +48,15 @@ namespace Eagle
 		{
 			std::vector<VkBuffer>		uniform_buffers;
 			std::vector<VkDeviceMemory> uniform_buffers_memory;
+			std::vector<void*>			memory_pointer;
 		};
 
 		VkRenderPass					m_render_pass;
 		std::vector<VulkanPipelineBase>	m_render_pipelines;
 		std::vector<VulkanDescriptor>	m_descriptors;
 
-		MainPassVertUBO					m_vert_ubo;
+		MeshPerFrameUBO					m_per_frame_ubo;
+		MeshPerDrawUBO					m_per_draw_ubo;
 		std::vector<VulkanUniformBuffer> m_uniform_buffers;
 
 		std::shared_ptr<VulkanRHI>				m_rhi;

@@ -113,7 +113,7 @@ namespace Eagle
         );
 
         // TODO: initialize material uniform buffer
-        VkDeviceSize bufferSize = sizeof(MeshPerMaterialUniformBufferObject);
+        VkDeviceSize bufferSize = sizeof(MeshPerMaterialUBO);
         for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
             VulkanUtil::createBuffer(
                 m_rhi->m_physical_device,
@@ -140,7 +140,7 @@ namespace Eagle
 
         VkDescriptorBufferInfo material_uniform_buffer_info = {};
         material_uniform_buffer_info.offset = 0;
-        material_uniform_buffer_info.range = sizeof(MeshPerMaterialUniformBufferObject);
+        material_uniform_buffer_info.range = sizeof(MeshPerMaterialUBO);
         material_uniform_buffer_info.buffer = temp.material_uniform_buffer;
 
         VkDescriptorImageInfo base_color_image_info = {};

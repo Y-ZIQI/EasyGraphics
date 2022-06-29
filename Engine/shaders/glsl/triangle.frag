@@ -1,6 +1,6 @@
 #version 450
 
-layout(set = 1, binding = 0) uniform _unused_name_permaterial
+layout(set = 2, binding = 0) uniform _unused_name_permaterial
 {
     vec4  baseColorFactor;
     // highp float metallicFactor;
@@ -12,7 +12,7 @@ layout(set = 1, binding = 0) uniform _unused_name_permaterial
     // uint        is_double_sided;
 };
 
-layout(set = 1, binding = 1) uniform sampler2D texSampler;
+layout(set = 2, binding = 1) uniform sampler2D texSampler;
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec2 fragTexCoord;

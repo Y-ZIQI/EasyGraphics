@@ -176,6 +176,7 @@
     <ClInclude Include="source\function\render\rhi\vulkan\vulkan_pipeline.h" />
     <ClInclude Include="source\function\render\rhi\vulkan\vulkan_resource.h" />
     <ClInclude Include="source\function\render\rhi\vulkan\vulkan_rhi.h" />
+    <ClInclude Include="source\function\render\rhi\vulkan\vulkan_types.h" />
     <ClInclude Include="source\function\render\rhi\vulkan\vulkan_util.h" />
     <ClInclude Include="source\function\render\window_system.h" />
     <ClInclude Include="source\function\world\scene.h" />

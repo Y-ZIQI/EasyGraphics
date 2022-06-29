@@ -23,10 +23,8 @@ namespace Eagle
 
     void VulkanPass::updateUniformBuffer()
     {
-        void* data;
-        vkMapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[m_rhi->m_current_frame_index], 0, sizeof(m_vert_ubo), 0, &data);
-        memcpy(data, &m_vert_ubo, sizeof(m_vert_ubo));
-        vkUnmapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[m_rhi->m_current_frame_index]);
+        memcpy(m_uniform_buffers[0].memory_pointer[m_rhi->m_current_frame_index], &m_per_frame_ubo, sizeof(m_per_frame_ubo));
+        memcpy(m_uniform_buffers[1].memory_pointer[m_rhi->m_current_frame_index], &m_per_draw_ubo, sizeof(m_per_draw_ubo));
     }
 
     void VulkanPass::draw()
@@ -49,24 +47,25 @@ namespace Eagle
         m_rhi->m_vk_cmd_begin_render_pass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         m_rhi->m_vk_cmd_bind_pipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].pipeline);
 
-        // TODO: need update
-        static auto startTime = std::chrono::high_resolution_clock::now();
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-        m_vert_ubo.model_matrix = glm::rotate(glm::mat4(1.0f), 0.01f * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        // ---
-        updateUniformBuffer();
+        memcpy(m_uniform_buffers[0].memory_pointer[m_rhi->m_current_frame_index], &m_per_frame_ubo, sizeof(m_per_frame_ubo));
+
         m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 0, 1, &m_descriptors[0].descriptor_set, 0, nullptr);
 
-        for (auto& pair : m_render_resource->m_material_meshes) {
+        for (auto& pair : m_render_resource->m_render_nodes) {
             auto& material = m_render_resource->m_render_materials[pair.first];
-            auto& mesh_set = pair.second;
+            auto& mesh_map = pair.second;
 
-            m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 1, 1, &material.material_descriptor_set, 0, nullptr);
+            m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 2, 1, &material.material_descriptor_set, 0, nullptr);
 
-            for (auto& mesh_id : mesh_set) {
+            for (auto& node_pair : mesh_map) {
+                VulkanMesh& render_mesh = m_render_resource->m_render_meshes[node_pair.first];
+                VulkanMeshNode& render_node = node_pair.second;
 
-                VulkanMesh& render_mesh = m_render_resource->m_render_meshes[mesh_id];
+                m_per_draw_ubo.model_matrix = render_node.model_matrix;
+                memcpy(m_uniform_buffers[1].memory_pointer[m_rhi->m_current_frame_index], &m_per_draw_ubo, sizeof(m_per_draw_ubo));
+
+                m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 1, 1, &m_descriptors[1].descriptor_set, 0, nullptr);
+
                 VkBuffer vertexBuffers[] = { render_mesh.mesh_vertex_buffer };
                 VkDeviceSize offsets[] = { 0 };
                 m_rhi->m_vk_cmd_bind_vertex_buffers(commandBuffer, 0, 1, vertexBuffers, offsets);
@@ -93,11 +92,17 @@ namespace Eagle
         cleanupSwapChain();
 
         for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
+            vkUnmapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[i]);
             vkDestroyBuffer(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers[i], nullptr);
             vkFreeMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[i], nullptr);
+
+            vkUnmapMemory(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers_memory[i]);
+            vkDestroyBuffer(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers[i], nullptr);
+            vkFreeMemory(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers_memory[i], nullptr);
         }
         vkDestroyDescriptorSetLayout(m_rhi->m_device, m_descriptors[0].layout, nullptr);
         vkDestroyDescriptorSetLayout(m_rhi->m_device, m_descriptors[1].layout, nullptr);
+        vkDestroyDescriptorSetLayout(m_rhi->m_device, m_descriptors[2].layout, nullptr);
 	}
 
 	void VulkanPass::setupRenderPass()
@@ -161,9 +166,10 @@ namespace Eagle
 
     void VulkanPass::setupDescriptorSetLayout()
     {
-        m_descriptors.resize(2);
+        m_descriptors.resize(3);
 
         {
+            // Global uniforms
             VkDescriptorSetLayoutBinding uboLayoutBinding{};
             uboLayoutBinding.binding = 0;
             uboLayoutBinding.descriptorCount = 1;
@@ -183,6 +189,29 @@ namespace Eagle
         }
 
         {
+            // Per draw
+            VkDescriptorSetLayoutBinding uboLayoutBinding{};
+            uboLayoutBinding.binding = 0;
+            uboLayoutBinding.descriptorCount = 1;
+            uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            uboLayoutBinding.pImmutableSamplers = nullptr;
+            uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+            VkDescriptorSetLayoutCreateInfo layoutInfo{};
+            std::array<VkDescriptorSetLayoutBinding, 1> bindings = { uboLayoutBinding };
+            layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+            layoutInfo.pBindings = bindings.data();
+
+            if (vkCreateDescriptorSetLayout(m_rhi->m_device, &layoutInfo, nullptr, &m_descriptors[1].layout) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create descriptor set layout!");
+            }
+            // per draw, not per mesh, so this line is not used
+            //m_render_resource->m_mesh_descriptor_set_layout = &m_descriptors[1].layout;
+        }
+
+        {
+            // Per material
             VkDescriptorSetLayoutBinding uboLayoutBinding{};
             uboLayoutBinding.binding = 0;
             uboLayoutBinding.descriptorCount = 1;
@@ -203,11 +232,11 @@ namespace Eagle
             layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
             layoutInfo.pBindings = bindings.data();
 
-            if (vkCreateDescriptorSetLayout(m_rhi->m_device, &layoutInfo, nullptr, &m_descriptors[1].layout) != VK_SUCCESS) {
+            if (vkCreateDescriptorSetLayout(m_rhi->m_device, &layoutInfo, nullptr, &m_descriptors[2].layout) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create descriptor set layout!");
             }
             // DescriptorSetLayout pointers for render resource
-            m_render_resource->m_material_descriptor_set_layout = &m_descriptors[1].layout;
+            m_render_resource->m_material_descriptor_set_layout = &m_descriptors[2].layout;
         }
     }
 
@@ -235,27 +264,8 @@ namespace Eagle
 
         VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-        VkVertexInputBindingDescription bindingDescription{};
-        bindingDescription.binding = 0;
-        bindingDescription.stride = sizeof(VulkanVertex);
-        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
-
-        attributeDescriptions[0].binding = 0;
-        attributeDescriptions[0].location = 0;
-        attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributeDescriptions[0].offset = offsetof(VulkanVertex, pos);
-
-        attributeDescriptions[1].binding = 0;
-        attributeDescriptions[1].location = 1;
-        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributeDescriptions[1].offset = offsetof(VulkanVertex, color);
-
-        attributeDescriptions[2].binding = 0;
-        attributeDescriptions[2].location = 2;
-        attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-        attributeDescriptions[2].offset = offsetof(VulkanVertex, texCoord);
+        auto bindingDescription = VulkanVertex::getBindingDescription();
+        auto attributeDescriptions = VulkanVertex::getAttributeDescriptions();
 
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -329,8 +339,8 @@ namespace Eagle
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 2;
-        std::vector<VkDescriptorSetLayout> buf = { m_descriptors[0].layout , m_descriptors[1].layout };
+        std::vector<VkDescriptorSetLayout> buf = { m_descriptors[0].layout, m_descriptors[1].layout, m_descriptors[2].layout };
+        pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(buf.size());
         pipelineLayoutInfo.pSetLayouts = buf.data();
 
         if (vkCreatePipelineLayout(m_rhi->m_device, &pipelineLayoutInfo, nullptr, &m_render_pipelines[0].layout) != VK_SUCCESS) {
@@ -388,54 +398,110 @@ namespace Eagle
 
     void VulkanPass::setupUniformBuffers()
     {
-        m_uniform_buffers.resize(1);
-        
-        VkDeviceSize bufferSize = sizeof(MainPassVertUBO);
+        m_uniform_buffers.resize(2);
+        {
+            VkDeviceSize bufferSize = sizeof(MeshPerFrameUBO);
 
-        m_uniform_buffers[0].uniform_buffers.resize(m_rhi->m_max_frames_in_flight);
-        m_uniform_buffers[0].uniform_buffers_memory.resize(m_rhi->m_max_frames_in_flight);
+            m_uniform_buffers[0].uniform_buffers.resize(m_rhi->m_max_frames_in_flight);
+            m_uniform_buffers[0].uniform_buffers_memory.resize(m_rhi->m_max_frames_in_flight);
+            m_uniform_buffers[0].memory_pointer.resize(m_rhi->m_max_frames_in_flight);
 
-        for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
-            VulkanUtil::createBuffer(
-                m_rhi->m_physical_device,
-                m_rhi->m_device,
-                bufferSize,
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                m_uniform_buffers[0].uniform_buffers[i],
-                m_uniform_buffers[0].uniform_buffers_memory[i]
-            );
+            for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
+                VulkanUtil::createBuffer(
+                    m_rhi->m_physical_device,
+                    m_rhi->m_device,
+                    bufferSize,
+                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                    m_uniform_buffers[0].uniform_buffers[i],
+                    m_uniform_buffers[0].uniform_buffers_memory[i]
+                );
+                vkMapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[i], 0, sizeof(m_per_frame_ubo), 0, &m_uniform_buffers[0].memory_pointer[i]);
+            }
+        }
+
+        {
+            VkDeviceSize bufferSize = sizeof(MeshPerDrawUBO);
+
+            m_uniform_buffers[1].uniform_buffers.resize(m_rhi->m_max_frames_in_flight);
+            m_uniform_buffers[1].uniform_buffers_memory.resize(m_rhi->m_max_frames_in_flight);
+            m_uniform_buffers[1].memory_pointer.resize(m_rhi->m_max_frames_in_flight);
+
+            for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
+                VulkanUtil::createBuffer(
+                    m_rhi->m_physical_device,
+                    m_rhi->m_device,
+                    bufferSize,
+                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                    m_uniform_buffers[1].uniform_buffers[i],
+                    m_uniform_buffers[1].uniform_buffers_memory[i]
+                );
+                vkMapMemory(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers_memory[i], 0, sizeof(m_per_draw_ubo), 0, &m_uniform_buffers[1].memory_pointer[i]);
+            }
         }
     }
 
     void VulkanPass::setupDescriptorSets()
     {
-        VkDescriptorSetAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = m_rhi->m_descriptor_pool;
-        allocInfo.descriptorSetCount = 1;
-        allocInfo.pSetLayouts = &m_descriptors[0].layout;
+        {
+            VkDescriptorSetAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            allocInfo.descriptorPool = m_rhi->m_descriptor_pool;
+            allocInfo.descriptorSetCount = 1;
+            allocInfo.pSetLayouts = &m_descriptors[0].layout;
 
-        if (vkAllocateDescriptorSets(m_rhi->m_device, &allocInfo, &m_descriptors[0].descriptor_set) != VK_SUCCESS) {
-            throw std::runtime_error("failed to allocate descriptor sets!");
+            if (vkAllocateDescriptorSets(m_rhi->m_device, &allocInfo, &m_descriptors[0].descriptor_set) != VK_SUCCESS) {
+                throw std::runtime_error("failed to allocate descriptor sets!");
+            }
+
+            for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
+                VkDescriptorBufferInfo bufferInfo{};
+                bufferInfo.buffer = m_uniform_buffers[0].uniform_buffers[i];
+                bufferInfo.offset = 0;
+                bufferInfo.range = sizeof(MeshPerFrameUBO);
+
+                VkWriteDescriptorSet descriptorWrites{};
+                descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrites.dstSet = m_descriptors[0].descriptor_set;
+                descriptorWrites.dstBinding = 0;
+                descriptorWrites.dstArrayElement = 0;
+                descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                descriptorWrites.descriptorCount = 1;
+                descriptorWrites.pBufferInfo = &bufferInfo;
+
+                vkUpdateDescriptorSets(m_rhi->m_device, 1, &descriptorWrites, 0, nullptr);
+            }
         }
 
-        for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
-            VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = m_uniform_buffers[0].uniform_buffers[i];
-            bufferInfo.offset = 0;
-            bufferInfo.range = sizeof(MainPassVertUBO);
+        {
+            VkDescriptorSetAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            allocInfo.descriptorPool = m_rhi->m_descriptor_pool;
+            allocInfo.descriptorSetCount = 1;
+            allocInfo.pSetLayouts = &m_descriptors[1].layout;
 
-            VkWriteDescriptorSet descriptorWrites{};
-            descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites.dstSet = m_descriptors[0].descriptor_set;
-            descriptorWrites.dstBinding = 0;
-            descriptorWrites.dstArrayElement = 0;
-            descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorWrites.descriptorCount = 1;
-            descriptorWrites.pBufferInfo = &bufferInfo;
+            if (vkAllocateDescriptorSets(m_rhi->m_device, &allocInfo, &m_descriptors[1].descriptor_set) != VK_SUCCESS) {
+                throw std::runtime_error("failed to allocate descriptor sets!");
+            }
 
-            vkUpdateDescriptorSets(m_rhi->m_device, 1, &descriptorWrites, 0, nullptr);
+            for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
+                VkDescriptorBufferInfo bufferInfo{};
+                bufferInfo.buffer = m_uniform_buffers[1].uniform_buffers[i];
+                bufferInfo.offset = 0;
+                bufferInfo.range = sizeof(MeshPerDrawUBO);
+
+                VkWriteDescriptorSet descriptorWrites{};
+                descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrites.dstSet = m_descriptors[1].descriptor_set;
+                descriptorWrites.dstBinding = 0;
+                descriptorWrites.dstArrayElement = 0;
+                descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                descriptorWrites.descriptorCount = 1;
+                descriptorWrites.pBufferInfo = &bufferInfo;
+
+                vkUpdateDescriptorSets(m_rhi->m_device, 1, &descriptorWrites, 0, nullptr);
+            }
         }
     }
 

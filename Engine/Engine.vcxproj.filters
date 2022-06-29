@@ -112,6 +112,9 @@
     <ClInclude Include="source\resource\res_type\data\camera.h">
       <Filter>resource\res_type\data</Filter>
     </ClInclude>
+    <ClInclude Include="source\function\render\rhi\vulkan\vulkan_types.h">
+      <Filter>function\render\rhi\vulkan</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\engine.cpp" />
