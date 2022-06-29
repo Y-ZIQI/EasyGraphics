@@ -168,10 +168,6 @@ namespace Eagle
         VulkanMesh createMesh(RenderMeshData mesh_data);
         VulkanPBRMaterial createPBRMaterial(RenderMaterialData material_data);
 
-        RenderMeshData loadMeshData(const MeshData& source);
-        std::shared_ptr<TextureData> loadTexture(const std::string& file, bool is_srgb, bool vflip);
-        RenderMaterialData loadMaterialData(const std::string& tex_file, bool vflip);
-
         void cleanup();
 
     private:

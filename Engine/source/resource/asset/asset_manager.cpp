@@ -49,7 +49,7 @@ namespace Eagle
 
                 vertex.tex_coord = {
                     attrib.texcoords[2 * index.texcoord_index + 0],
-                    1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+                    attrib.texcoords[2 * index.texcoord_index + 1]
                 };
 
                 vertex.color = { 1.0f, 1.0f, 1.0f };
@@ -75,6 +75,25 @@ namespace Eagle
 		return m_importer.loadObj(model_path);
 	}
 
+    void AssetManager::loadScene(const std::string& scene_path, const std::string& texture_path, std::shared_ptr<Scene> n_scene)
+    {
+        n_scene->cleanup();
+        //n_scene->m_directory = scene_path.substr(0, scene_path.find_last_of('/') + 1);
+        n_scene->m_directory = std::string("");
+        n_scene->m_texture_filp_vertically = true;
+        MaterialData n_mat;
+        n_mat.m_material_name = texture_path;
+        n_mat.m_base_color_texture_file = texture_path;
+        n_mat.m_specular_texture_file = std::string("");
+        n_mat.m_normal_texture_file = std::string("");
+        n_mat.m_emissive_texture_file = std::string("");
+        n_scene->m_materials[0] = n_mat;
+        auto mesh_ptr = loadStaticMesh(scene_path);
+        n_scene->m_meshes[0] = *mesh_ptr;
+        n_scene->m_material_meshes[0] = { 0 };
+        n_scene->m_transforms[0] = { glm::mat4(1.0f), glm::mat3(1.0f) };
+    }
+
     void AssetManager::loadScene(const std::string& scene_path, std::shared_ptr<Scene> n_scene)
     {
         n_scene->cleanup();
@@ -96,16 +115,19 @@ namespace Eagle
         // Add Materials
         for (uint32_t i = 0; i < scene->mNumMaterials; i++) {
             aiMaterial* mat = scene->mMaterials[i];
-            aiString name_str, diffuse_str;
+            aiString name_str, diffuse_str, specular_str, normal_str, emmissive_str;
             mat->Get(AI_MATKEY_NAME, name_str);
             mat->GetTexture(aiTextureType_DIFFUSE, 0, &diffuse_str);
-            //mat->GetTexture(aiTextureType_SPECULAR, 0, &specular_str);
-            //mat->GetTexture(aiTextureType_NORMALS, 0, &normal_str);
-            //mat->GetTexture(aiTextureType_EMISSIVE, 0, &emmissive_str);
+            mat->GetTexture(aiTextureType_SPECULAR, 0, &specular_str);
+            mat->GetTexture(aiTextureType_NORMALS, 0, &normal_str);
+            mat->GetTexture(aiTextureType_EMISSIVE, 0, &emmissive_str);
 
             MaterialData n_mat;
             n_mat.m_material_name = name_str.C_Str();
-            n_mat.m_base_colour_texture_file = diffuse_str.C_Str();
+            n_mat.m_base_color_texture_file = diffuse_str.C_Str();
+            n_mat.m_specular_texture_file = specular_str.C_Str();
+            n_mat.m_normal_texture_file = normal_str.C_Str();
+            n_mat.m_emissive_texture_file = emmissive_str.C_Str();
             n_scene->m_materials[i] = n_mat;
             n_scene->m_material_meshes[i] = std::set<uint32_t>();
         }

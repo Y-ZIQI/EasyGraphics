@@ -31,6 +31,7 @@ namespace Eagle
 
 		std::shared_ptr<MeshData> loadStaticMesh(const std::string& model_path);
 
+		void loadScene(const std::string& scene_path, const std::string& texture_path, std::shared_ptr<Scene> n_scene);
 		void loadScene(const std::string& scene_path, std::shared_ptr<Scene> n_scene);
 
 	private:

@@ -11,9 +11,10 @@ namespace Eagle
 			g_global_context.m_world_manager->m_current_scene
 		);
 
-		//auto mesh = g_global_context.m_asset_manager->loadStaticMesh("../Engine/resources/models/viking_room.obj");
-		//const std::string tex_file = "../Engine/resources/textures/viking_room.png";
-		//g_global_context.m_render_system->m_render_resource->loadObjWithTexture(mesh, tex_file);
+		/*g_global_context.m_world_manager->loadObjSceneWithTexture("../Engine/resources/models/viking_room.obj", "../Engine/resources/textures/viking_room.png", g_global_context.m_asset_manager);
+		g_global_context.m_render_system->m_render_resource->uploadScene(
+			g_global_context.m_world_manager->m_current_scene
+		);*/
 	}
 
 	Viewer::~Viewer(){

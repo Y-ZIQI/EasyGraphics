@@ -14,6 +14,11 @@ namespace Eagle
 		m_vert_ubo.proj_view_matrix = m_scene->m_cameras[0].getViewProj();
 	}
 
+	void RenderPass::render()
+	{
+		RHIRenderPass::draw();
+	}
+
 	void RenderPass::cleanup()
 	{
 		RHIRenderPass::cleanup();

@@ -19,6 +19,7 @@ namespace Eagle
 
 		void initialize(RenderPassInitInfo init_info);
 		void updateUniforms();
+		void render();
 		void cleanup();
 
 		std::shared_ptr<RenderResource> m_render_resource;

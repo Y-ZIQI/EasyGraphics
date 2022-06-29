@@ -17,7 +17,7 @@ namespace Eagle
 			return true;
 		}
 		m_main_pass->updateUniforms();
-		m_main_pass->draw();
+		m_main_pass->render();
 		recreate_swapchain = m_rhi->postRendering();
 		return recreate_swapchain;
 	}
