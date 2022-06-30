@@ -98,9 +98,10 @@ namespace Eagle
     {
         std::shared_ptr<TextureData> m_base_color_texture;
         //std::shared_ptr<TextureData> m_metallic_roughness_texture;
-        //std::shared_ptr<TextureData> m_normal_texture;
-        //std::shared_ptr<TextureData> m_occlusion_texture;
-        //std::shared_ptr<TextureData> m_emissive_texture;
+        std::shared_ptr<TextureData> m_specular_texture;
+        std::shared_ptr<TextureData> m_normal_texture;
+        std::shared_ptr<TextureData> m_occlusion_texture;
+        std::shared_ptr<TextureData> m_emissive_texture;
     };
 
 }

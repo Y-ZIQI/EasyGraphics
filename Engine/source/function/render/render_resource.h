@@ -25,6 +25,7 @@ namespace Eagle
 
 		RenderMeshData loadMeshData(const MeshData& source);
 		std::shared_ptr<TextureData> loadTexture(const std::string& file, bool is_srgb, bool vflip);
+		std::shared_ptr<TextureData> loadTexture(const std::string& directory, const std::string& file, bool is_srgb, bool vflip);
 		RenderMaterialData loadMaterialData(const MaterialData& source, bool vflip);
 
 		std::shared_ptr<Scene> m_current_scene;

@@ -43,6 +43,9 @@
     <Filter Include="function\world">
       <UniqueIdentifier>{475a7f25-0564-4443-828d-dc178e3a26fa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="function\input">
+      <UniqueIdentifier>{1b7b54be-fa7f-490c-8da6-21fc5a4a260d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\function\render\rhi\vulkan\vulkan_rhi.h">
@@ -115,6 +118,9 @@
     <ClInclude Include="source\function\render\rhi\vulkan\vulkan_types.h">
       <Filter>function\render\rhi\vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="source\function\input\input_system.h">
+      <Filter>function\input</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\engine.cpp" />
@@ -168,6 +174,9 @@
     </ClCompile>
     <ClCompile Include="source\function\world\scene.cpp">
       <Filter>function\world</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\input\input_system.cpp">
+      <Filter>function\input</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

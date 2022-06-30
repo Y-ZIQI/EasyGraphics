@@ -95,10 +95,20 @@ namespace Eagle
         return texture;
     }
 
+    std::shared_ptr<TextureData> RenderResource::loadTexture(const std::string& directory, const std::string& file, bool is_srgb, bool vflip)
+    {
+        if (file != "")
+            return loadTexture(directory + file, is_srgb, vflip);
+        return nullptr;
+    }
+
     RenderMaterialData RenderResource::loadMaterialData(const MaterialData& source, bool vflip)
     {
         RenderMaterialData ret;
-        ret.m_base_color_texture = loadTexture(m_current_scene->m_directory + source.m_base_color_texture_file, true, vflip);
+        ret.m_base_color_texture = loadTexture(m_current_scene->m_directory, source.m_base_color_texture_file, true, vflip);
+        ret.m_specular_texture = loadTexture(m_current_scene->m_directory, source.m_specular_texture_file, true, vflip);
+        ret.m_normal_texture = loadTexture(m_current_scene->m_directory, source.m_normal_texture_file, true, vflip);
+        ret.m_emissive_texture = loadTexture(m_current_scene->m_directory, source.m_emissive_texture_file, true, vflip);
         return ret;
     }
 
