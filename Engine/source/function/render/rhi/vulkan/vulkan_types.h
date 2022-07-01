@@ -6,6 +6,14 @@
 
 namespace Eagle
 {
+    enum class EAGLE_MATERIAL_FLAGS : uint32_t
+    {
+        EAGLE_MATERIAL_FLAGS_BASECOLOR = 0x00000001,
+        EAGLE_MATERIAL_FLAGS_SPECULAR = 0x00000002,
+        EAGLE_MATERIAL_FLAGS_NORMAL = 0x00000004,
+        EAGLE_MATERIAL_FLAGS_EMISSIVE = 0x00000008
+    };
+
     struct VulkanVertex {
         glm::vec3 pos;
         glm::vec3 color;
@@ -55,14 +63,15 @@ namespace Eagle
 
     struct MeshPerMaterialUBO
     {
-        glm::vec4 baseColorFactor{ 0.0f, 0.0f, 0.0f, 0.0f };
+        alignas(16) uint32_t flags = 0;
+        alignas(16) glm::vec4 baseColorFactor{ 0.0f, 0.0f, 0.0f, 0.0f };
 
         /*float metallicFactor = 0.0f;
         float roughnessFactor = 0.0f;
         float normalScale = 0.0f;
         float occlusionStrength = 0.0f;
 
-        glm::vec3  emissiveFactor = { 0.0f, 0.0f, 0.0f };
+        glm::vec3  emissiveFactor{ 0.0f, 0.0f, 0.0f };
         uint32_t is_blend = 0;
         uint32_t is_double_sided = 0;*/
     };
@@ -81,17 +90,23 @@ namespace Eagle
     };
 
     // material
-    struct VulkanPBRMaterialDesc {
-        uint32_t width;
-        uint32_t height;
+
+    struct VulkanTexture
+    {
+        VkImage         image;
+        VkDeviceMemory  image_memory;
+        VkImageView     image_view;
+        uint32_t        width;
+        uint32_t        height;
+        uint32_t        mip_levels;
     };
+
     struct VulkanPBRMaterial
     {
-        VulkanPBRMaterialDesc desc;
-
-        VkImage         base_color_texture_image;
-        VkDeviceMemory  base_color_texture_image_memory;
-        VkImageView     base_color_image_view;
+        VulkanTexture   base_color_texture;
+        VulkanTexture   specular_texture;
+        VulkanTexture   normal_texture;
+        VulkanTexture   emissive_texture;
 
         //VkImage       base_color_texture_image = VK_NULL_HANDLE;
         //VkImageView   base_color_image_view = VK_NULL_HANDLE;
@@ -115,6 +130,7 @@ namespace Eagle
 
         VkBuffer        material_uniform_buffer;
         VkDeviceMemory  material_uniform_buffer_memory;
+        void*           material_uniform_memory_pointer;
 
         VkDescriptorSet material_descriptor_set;
     };

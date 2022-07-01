@@ -212,25 +212,57 @@ namespace Eagle
 
         {
             // Per material
-            VkDescriptorSetLayoutBinding uboLayoutBinding{};
-            uboLayoutBinding.binding = 0;
-            uboLayoutBinding.descriptorCount = 1;
-            uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            uboLayoutBinding.pImmutableSamplers = nullptr;
-            uboLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            // VkDescriptorSetLayoutBinding uboLayoutBinding{};
+            // uboLayoutBinding.binding = 0;
+            // uboLayoutBinding.descriptorCount = 1;
+            // uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            // uboLayoutBinding.pImmutableSamplers = nullptr;
+            // uboLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-            VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-            samplerLayoutBinding.binding = 1;
-            samplerLayoutBinding.descriptorCount = 1;
-            samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            samplerLayoutBinding.pImmutableSamplers = nullptr;
-            samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            std::array<VkDescriptorSetLayoutBinding, 5> layoutBinding;
+
+            layoutBinding[0].binding = 0;
+            layoutBinding[0].descriptorCount = 1;
+            layoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            layoutBinding[0].pImmutableSamplers = nullptr;
+            layoutBinding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+            layoutBinding[1].binding = 1;
+            layoutBinding[1].descriptorCount = 1;
+            layoutBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            layoutBinding[1].pImmutableSamplers = nullptr;
+            layoutBinding[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+            layoutBinding[2].binding = 2;
+            layoutBinding[2].descriptorCount = 1;
+            layoutBinding[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            layoutBinding[2].pImmutableSamplers = nullptr;
+            layoutBinding[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+            layoutBinding[3].binding = 3;
+            layoutBinding[3].descriptorCount = 1;
+            layoutBinding[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            layoutBinding[3].pImmutableSamplers = nullptr;
+            layoutBinding[3].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+            layoutBinding[4].binding = 4;
+            layoutBinding[4].descriptorCount = 1;
+            layoutBinding[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            layoutBinding[4].pImmutableSamplers = nullptr;
+            layoutBinding[4].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+            // VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+            // samplerLayoutBinding.binding = 1;
+            // samplerLayoutBinding.descriptorCount = 1;
+            // samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            // samplerLayoutBinding.pImmutableSamplers = nullptr;
+            // samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
             VkDescriptorSetLayoutCreateInfo layoutInfo{};
-            std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+            // std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
             layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-            layoutInfo.pBindings = bindings.data();
+            layoutInfo.bindingCount = static_cast<uint32_t>(layoutBinding.size());
+            layoutInfo.pBindings = layoutBinding.data();
 
             if (vkCreateDescriptorSetLayout(m_rhi->m_device, &layoutInfo, nullptr, &m_descriptors[2].layout) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create descriptor set layout!");
@@ -416,7 +448,7 @@ namespace Eagle
                     m_uniform_buffers[0].uniform_buffers[i],
                     m_uniform_buffers[0].uniform_buffers_memory[i]
                 );
-                vkMapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[i], 0, sizeof(m_per_frame_ubo), 0, &m_uniform_buffers[0].memory_pointer[i]);
+                vkMapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[i], 0, sizeof(MeshPerFrameUBO), 0, &m_uniform_buffers[0].memory_pointer[i]);
             }
         }
 
@@ -437,7 +469,7 @@ namespace Eagle
                     m_uniform_buffers[1].uniform_buffers[i],
                     m_uniform_buffers[1].uniform_buffers_memory[i]
                 );
-                vkMapMemory(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers_memory[i], 0, sizeof(m_per_draw_ubo), 0, &m_uniform_buffers[1].memory_pointer[i]);
+                vkMapMemory(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers_memory[i], 0, sizeof(MeshPerDrawUBO), 0, &m_uniform_buffers[1].memory_pointer[i]);
             }
         }
     }

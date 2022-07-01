@@ -26,16 +26,23 @@ namespace Eagle
         return temp;
     }
 
-    VulkanPBRMaterial VulkanRenderResource::createPBRMaterial(RenderMaterialData material_data)
+    bool VulkanRenderResource::createTexture(std::shared_ptr<TextureData> tex_data, VulkanTexture& n_texture)
     {
-        uint32_t width = material_data.m_base_color_texture->m_width, height = material_data.m_base_color_texture->m_height;
+        if (!tex_data) {
+            n_texture.width = 0;
+            n_texture.height = 0;
+            n_texture.mip_levels = 0;
+            n_texture.image_view = NULL;
+            return false;
+        }
 
-        VulkanPBRMaterial temp;
-        temp.desc = { width, height };
+        n_texture.width = tex_data->m_width;
+        n_texture.height = tex_data->m_height;
+        n_texture.mip_levels = std::floor(std::log2(std::max(n_texture.width, n_texture.height))) + 1;
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
-        VkDeviceSize imageSize = width * height * 4;
+        VkDeviceSize imageSize = n_texture.width * n_texture.height * 4;
 
         VulkanUtil::createBuffer(
             m_rhi->m_physical_device,
@@ -49,82 +56,100 @@ namespace Eagle
 
         void* data;
         vkMapMemory(m_rhi->m_device, stagingBufferMemory, 0, imageSize, 0, &data);
-        memcpy(data, material_data.m_base_color_texture->m_pixels, static_cast<size_t>(imageSize));
+        memcpy(data, tex_data->m_pixels, static_cast<size_t>(imageSize));
         vkUnmapMemory(m_rhi->m_device, stagingBufferMemory);
-
-        uint32_t mip_levels = std::floor(std::log2(std::max(width, height))) + 1;
 
         VulkanUtil::createImage(
             m_rhi->m_physical_device,
             m_rhi->m_device,
-            width,
-            height,
-            VK_FORMAT_R8G8B8A8_SRGB, 
-            VK_IMAGE_TILING_OPTIMAL, 
+            n_texture.width,
+            n_texture.height,
+            VK_FORMAT_R8G8B8A8_SRGB,
+            VK_IMAGE_TILING_OPTIMAL,
             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-            temp.base_color_texture_image,
-            temp.base_color_texture_image_memory,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            n_texture.image,
+            n_texture.image_memory,
             0,
             1,
-            mip_levels
+            n_texture.mip_levels
         );
 
         VulkanUtil::transitionImageLayout(
-            m_rhi.get(), 
-            temp.base_color_texture_image,
+            m_rhi.get(),
+            n_texture.image,
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             1,
-            mip_levels,
+            n_texture.mip_levels,
             VK_IMAGE_ASPECT_COLOR_BIT
         );
         VulkanUtil::copyBufferToImage(
             m_rhi.get(),
             stagingBuffer,
-            temp.base_color_texture_image,
-            width, 
-            height,
+            n_texture.image,
+            n_texture.width,
+            n_texture.height,
             1
         );
         VulkanUtil::transitionImageLayout(
             m_rhi.get(),
-            temp.base_color_texture_image,
+            n_texture.image,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             1,
-            mip_levels,
+            n_texture.mip_levels,
             VK_IMAGE_ASPECT_COLOR_BIT
         );
 
         vkDestroyBuffer(m_rhi->m_device, stagingBuffer, nullptr);
         vkFreeMemory(m_rhi->m_device, stagingBufferMemory, nullptr);
 
-        VulkanUtil::generateMipmaps(m_rhi.get(), temp.base_color_texture_image, VK_FORMAT_R8G8B8A8_SRGB, width, height, 1, mip_levels);
+        VulkanUtil::generateMipmaps(m_rhi.get(), n_texture.image, VK_FORMAT_R8G8B8A8_SRGB, n_texture.width, n_texture.height, 1, n_texture.mip_levels);
 
-        temp.base_color_image_view = VulkanUtil::createImageView(
+        n_texture.image_view = VulkanUtil::createImageView(
             m_rhi->m_device,
-            temp.base_color_texture_image,
+            n_texture.image,
             VK_FORMAT_R8G8B8A8_SRGB,
             VK_IMAGE_ASPECT_COLOR_BIT,
             VK_IMAGE_VIEW_TYPE_2D,
             1,
-            mip_levels
+            n_texture.mip_levels
         );
+        return true;
+    }
+
+    VulkanPBRMaterial VulkanRenderResource::createPBRMaterial(RenderMaterialData material_data)
+    {
+        VulkanPBRMaterial temp;
+        MeshPerMaterialUBO material_uniforms;
+
+        if (createTexture(material_data.m_base_color_texture, temp.base_color_texture)) {
+            material_uniforms.flags |= (uint32_t)EAGLE_MATERIAL_FLAGS::EAGLE_MATERIAL_FLAGS_BASECOLOR;
+        }
+        if (createTexture(material_data.m_specular_texture, temp.specular_texture)) {
+            material_uniforms.flags |= (uint32_t)EAGLE_MATERIAL_FLAGS::EAGLE_MATERIAL_FLAGS_SPECULAR;
+        }
+        if (createTexture(material_data.m_normal_texture, temp.normal_texture)) {
+            material_uniforms.flags |= (uint32_t)EAGLE_MATERIAL_FLAGS::EAGLE_MATERIAL_FLAGS_NORMAL;
+        }
+        if (createTexture(material_data.m_emissive_texture, temp.emissive_texture)) {
+            material_uniforms.flags |= (uint32_t)EAGLE_MATERIAL_FLAGS::EAGLE_MATERIAL_FLAGS_EMISSIVE;
+        }
 
         // TODO: initialize material uniform buffer
         VkDeviceSize bufferSize = sizeof(MeshPerMaterialUBO);
-        for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
-            VulkanUtil::createBuffer(
-                m_rhi->m_physical_device,
-                m_rhi->m_device,
-                bufferSize,
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                temp.material_uniform_buffer,
-                temp.material_uniform_buffer_memory
-            );
-        }
+        VulkanUtil::createBuffer(
+            m_rhi->m_physical_device,
+            m_rhi->m_device,
+            bufferSize,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            temp.material_uniform_buffer,
+            temp.material_uniform_buffer_memory
+        );
+        vkMapMemory(m_rhi->m_device, temp.material_uniform_buffer_memory, 0, sizeof(MeshPerMaterialUBO), 0, &temp.material_uniform_memory_pointer);
+        memcpy(temp.material_uniform_memory_pointer, &material_uniforms, sizeof(material_uniforms));
 
         VkDescriptorSetAllocateInfo material_descriptor_set_alloc_info;
         material_descriptor_set_alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -143,17 +168,41 @@ namespace Eagle
         material_uniform_buffer_info.range = sizeof(MeshPerMaterialUBO);
         material_uniform_buffer_info.buffer = temp.material_uniform_buffer;
 
-        VkDescriptorImageInfo base_color_image_info = {};
-        base_color_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        base_color_image_info.imageView = temp.base_color_image_view;
-        base_color_image_info.sampler = VulkanUtil::getMipmapSampler(
+        VkDescriptorImageInfo image_info[4];
+        image_info[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        image_info[0].imageView = temp.base_color_texture.image_view;
+        image_info[0].sampler = VulkanUtil::getMipmapSampler(
             m_rhi->m_physical_device,
             m_rhi->m_device,
-            width,
-            height
+            temp.base_color_texture.width,
+            temp.base_color_texture.height
+        );
+        image_info[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        image_info[1].imageView = temp.specular_texture.image_view;
+        image_info[1].sampler = VulkanUtil::getMipmapSampler(
+            m_rhi->m_physical_device,
+            m_rhi->m_device,
+            temp.specular_texture.width,
+            temp.specular_texture.height
+        );
+        image_info[2].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        image_info[2].imageView = temp.normal_texture.image_view;
+        image_info[2].sampler = VulkanUtil::getMipmapSampler(
+            m_rhi->m_physical_device,
+            m_rhi->m_device,
+            temp.normal_texture.width,
+            temp.normal_texture.height
+        );
+        image_info[3].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        image_info[3].imageView = temp.emissive_texture.image_view;
+        image_info[3].sampler = VulkanUtil::getMipmapSampler(
+            m_rhi->m_physical_device,
+            m_rhi->m_device,
+            temp.emissive_texture.width,
+            temp.emissive_texture.height
         );
 
-        VkWriteDescriptorSet descriptorWrites[2];
+        VkWriteDescriptorSet descriptorWrites[5];
 
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[0].pNext = NULL;
@@ -171,9 +220,36 @@ namespace Eagle
         descriptorWrites[1].dstArrayElement = 0;
         descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         descriptorWrites[1].descriptorCount = 1;
-        descriptorWrites[1].pImageInfo = &base_color_image_info;
+        descriptorWrites[1].pImageInfo = &image_info[0];
 
-        vkUpdateDescriptorSets(m_rhi->m_device, 2, descriptorWrites, 0, nullptr);
+        descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[2].pNext = NULL;
+        descriptorWrites[2].dstSet = temp.material_descriptor_set;
+        descriptorWrites[2].dstBinding = 2;
+        descriptorWrites[2].dstArrayElement = 0;
+        descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[2].descriptorCount = 1;
+        descriptorWrites[2].pImageInfo = &image_info[1];
+
+        descriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[3].pNext = NULL;
+        descriptorWrites[3].dstSet = temp.material_descriptor_set;
+        descriptorWrites[3].dstBinding = 3;
+        descriptorWrites[3].dstArrayElement = 0;
+        descriptorWrites[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[3].descriptorCount = 1;
+        descriptorWrites[3].pImageInfo = &image_info[2];
+
+        descriptorWrites[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[4].pNext = NULL;
+        descriptorWrites[4].dstSet = temp.material_descriptor_set;
+        descriptorWrites[4].dstBinding = 4;
+        descriptorWrites[4].dstArrayElement = 0;
+        descriptorWrites[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[4].descriptorCount = 1;
+        descriptorWrites[4].pImageInfo = &image_info[3];
+
+        vkUpdateDescriptorSets(m_rhi->m_device, 5, descriptorWrites, 0, nullptr);
 
         return temp;
     }
@@ -192,10 +268,16 @@ namespace Eagle
         for (auto& pair : m_render_materials) {
             VulkanPBRMaterial& vulkan_material = pair.second;
 
-            vkDestroyImageView(m_rhi->m_device, vulkan_material.base_color_image_view, nullptr);
-            vkDestroyImage(m_rhi->m_device, vulkan_material.base_color_texture_image, nullptr);
-            vkFreeMemory(m_rhi->m_device, vulkan_material.base_color_texture_image_memory, nullptr);
+            vkDestroyImageView(m_rhi->m_device, vulkan_material.base_color_texture.image_view, nullptr);
+            vkDestroyImage(m_rhi->m_device, vulkan_material.base_color_texture.image, nullptr);
+            vkFreeMemory(m_rhi->m_device, vulkan_material.base_color_texture.image_memory, nullptr);
+
+            vkUnmapMemory(m_rhi->m_device, vulkan_material.material_uniform_buffer_memory);
+            vkDestroyBuffer(m_rhi->m_device, vulkan_material.material_uniform_buffer, nullptr);
+            vkFreeMemory(m_rhi->m_device, vulkan_material.material_uniform_buffer_memory, nullptr);
         }
+        m_material_meshes.clear();
+        m_render_nodes.clear();
     }
 
     void VulkanRenderResource::createVertexBuffer(void* vertex_data, uint32_t buffer_size, VulkanMesh &n_mesh)

@@ -27,6 +27,7 @@ namespace Eagle
         void initialize(RenderResourceInitInfo init_info);
 
         VulkanMesh createMesh(RenderMeshData mesh_data);
+        bool createTexture(std::shared_ptr<TextureData> tex_data, VulkanTexture& n_texture);
         VulkanPBRMaterial createPBRMaterial(RenderMaterialData material_data);
 
         void cleanup();
