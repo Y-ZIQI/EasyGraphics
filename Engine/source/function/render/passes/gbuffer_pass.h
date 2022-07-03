@@ -5,19 +5,20 @@
 
 namespace Eagle
 {
-	struct VulkanPassInitInfo
+	struct GBufferPassInitInfo
 	{
 		std::shared_ptr<VulkanRHI> rhi;
 		std::shared_ptr<VulkanRenderResource> render_resource;
 	};
 
-	class VulkanPass
+	class GBufferPass
 	{
 	public:
-		VulkanPass() {};
-		~VulkanPass() {};
+		GBufferPass() {};
+		~GBufferPass() {};
 
-		void initialize(VulkanPassInitInfo init_info);
+		void initialize(GBufferPassInitInfo init_info);
+		void updateUniformBuffer();
 		void draw();
 		void cleanupSwapChain();
 		void cleanup();
@@ -50,9 +51,27 @@ namespace Eagle
 			std::vector<void*>			memory_pointer;
 		};
 
+		struct VulkanAttachment
+		{
+			VkImage        image;
+			VkDeviceMemory mem;
+			VkImageView    view;
+			VkFormat       format;
+		};
+
+		struct VulkanFramebuffer
+		{
+			int           width;
+			int           height;
+			VkFramebuffer framebuffer;
+
+			std::vector<VulkanAttachment> attachments;
+		};
+
 		VkRenderPass					m_render_pass;
 		std::vector<VulkanPipelineBase>	m_render_pipelines;
 		std::vector<VulkanDescriptor>	m_descriptors;
+		VulkanFramebuffer               m_framebuffer;
 
 		MeshPerFrameUBO					m_per_frame_ubo;
 		MeshPerDrawUBO					m_per_draw_ubo;
@@ -61,4 +80,5 @@ namespace Eagle
 		std::shared_ptr<VulkanRHI>				m_rhi;
 		std::shared_ptr<VulkanRenderResource>	m_render_resource;
 	};
+
 }

@@ -52,7 +52,6 @@ namespace Eagle
 
     struct MeshPerFrameUBO
     {
-        alignas(16) glm::mat4 model_matrix;
         alignas(16) glm::mat4 proj_view_matrix;
     };
 

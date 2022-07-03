@@ -2,6 +2,8 @@
 
 #include "function/render/render_pass.h"
 
+//#include "function/render/gbuffer_pass.h"
+
 namespace Eagle
 {
 	struct RenderPipelineInitInfo

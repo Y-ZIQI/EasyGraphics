@@ -2,10 +2,6 @@
 
 #include "function/render/rhi/vulkan/vulkan_pass.h"
 
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
 namespace Eagle
 {
 	void VulkanPass::initialize(VulkanPassInitInfo init_info)
@@ -20,12 +16,6 @@ namespace Eagle
         setupUniformBuffers();
         setupDescriptorSets();
 	}
-
-    void VulkanPass::updateUniformBuffer()
-    {
-        memcpy(m_uniform_buffers[0].memory_pointer[m_rhi->m_current_frame_index], &m_per_frame_ubo, sizeof(m_per_frame_ubo));
-        memcpy(m_uniform_buffers[1].memory_pointer[m_rhi->m_current_frame_index], &m_per_draw_ubo, sizeof(m_per_draw_ubo));
-    }
 
     void VulkanPass::draw()
     {
