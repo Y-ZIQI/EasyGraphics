@@ -1,7 +1,6 @@
 #pragma once
 
-#include "function/render/rhi/vulkan/vulkan_rhi.h"
-#include "function/render/rhi/vulkan/vulkan_resource.h"
+#include "function/render/rhi/vulkan/vulkan_pass.h"
 
 namespace Eagle
 {
@@ -9,20 +8,22 @@ namespace Eagle
 	{
 		std::shared_ptr<VulkanRHI> rhi;
 		std::shared_ptr<VulkanRenderResource> render_resource;
+
+		std::shared_ptr<VulkanPass> gbuffer_pass_ptr;
 	};
 
-	class ShadingPass
+	class ShadingPass : public VulkanPass
 	{
 	public:
 		ShadingPass() {};
 		~ShadingPass() {};
 
 		void initialize(ShadingPassInitInfo init_info);
-		void updateUniformBuffer();
 		void draw();
 		void cleanupSwapChain();
 		void cleanup();
 
+		void setupAttachments();
 		void setupRenderPass();
 		void setupDescriptorSetLayout();
 		void setupPipelines();
@@ -32,53 +33,9 @@ namespace Eagle
 
 		void updateRecreateSwapChain();
 
-		struct VulkanPipelineBase
-		{
-			VkPipelineLayout layout;
-			VkPipeline       pipeline;
-		};
+		std::shared_ptr<VulkanFramebuffer> m_gbuffer_ptr;
 
-		struct VulkanDescriptor
-		{
-			VkDescriptorSetLayout	layout;
-			VkDescriptorSet			descriptor_set;
-		};
-
-		struct VulkanUniformBuffer
-		{
-			std::vector<VkBuffer>		uniform_buffers;
-			std::vector<VkDeviceMemory> uniform_buffers_memory;
-			std::vector<void*>			memory_pointer;
-		};
-
-		struct VulkanAttachment
-		{
-			VkImage        image;
-			VkDeviceMemory mem;
-			VkImageView    view;
-			VkFormat       format;
-		};
-
-		struct VulkanFramebuffer
-		{
-			int           width;
-			int           height;
-			VkFramebuffer framebuffer;
-
-			std::vector<VulkanAttachment> attachments;
-		};
-
-		VkRenderPass					m_render_pass;
-		std::vector<VulkanPipelineBase>	m_render_pipelines;
-		std::vector<VulkanDescriptor>	m_descriptors;
-		VulkanFramebuffer               m_framebuffer;
-
-		MeshPerFrameUBO					m_per_frame_ubo;
-		MeshPerDrawUBO					m_per_draw_ubo;
-		std::vector<VulkanUniformBuffer> m_uniform_buffers;
-
-		std::shared_ptr<VulkanRHI>				m_rhi;
-		std::shared_ptr<VulkanRenderResource>	m_render_resource;
+		MeshPerFrameUBO	m_per_frame_ubo;
 	};
 
 }

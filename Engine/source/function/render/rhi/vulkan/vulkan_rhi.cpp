@@ -303,6 +303,7 @@ namespace Eagle
         m_vk_cmd_bind_index_buffer = (PFN_vkCmdBindIndexBuffer)vkGetDeviceProcAddr(m_device, "vkCmdBindIndexBuffer");
         m_vk_cmd_bind_descriptor_sets = (PFN_vkCmdBindDescriptorSets)vkGetDeviceProcAddr(m_device, "vkCmdBindDescriptorSets");
         m_vk_cmd_draw_indexed = (PFN_vkCmdDrawIndexed)vkGetDeviceProcAddr(m_device, "vkCmdDrawIndexed");
+        m_vk_cmd_draw = (PFN_vkCmdDraw)vkGetDeviceProcAddr(m_device, "vkCmdDraw");
         m_vk_cmd_clear_attachments = (PFN_vkCmdClearAttachments)vkGetDeviceProcAddr(m_device, "vkCmdClearAttachments");
     }
 

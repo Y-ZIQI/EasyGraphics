@@ -10,8 +10,8 @@ namespace Eagle
 
 	void RenderPass::updateUniforms()
 	{
-		auto& m_scene = m_render_resource->m_current_scene;
-		m_per_frame_ubo.proj_view_matrix = m_scene->m_cameras[0].getViewProj();
+		//auto& m_scene = m_render_resource->m_current_scene;
+		//m_per_frame_ubo.proj_view_matrix = m_scene->m_cameras[0].getViewProj();
 	}
 
 	void RenderPass::render()

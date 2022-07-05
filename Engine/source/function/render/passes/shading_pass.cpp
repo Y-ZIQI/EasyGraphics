@@ -6,11 +6,12 @@ namespace Eagle
 {
 	void ShadingPass::initialize(ShadingPassInitInfo init_info)
 	{
-		m_rhi = init_info.rhi;
-		m_render_resource = init_info.render_resource;
+		VulkanPass::initialize({ init_info.rhi , init_info.render_resource });
+		m_gbuffer_ptr = std::shared_ptr<VulkanFramebuffer>(&init_info.gbuffer_pass_ptr->m_framebuffer);
 
-		setupFramebuffers();
+		setupAttachments();
 		setupRenderPass();
+		setupFramebuffers();
 		setupDescriptorSetLayout();
 		setupPipelines();
 		setupUniformBuffers();
@@ -19,22 +20,16 @@ namespace Eagle
 
 	void ShadingPass::draw()
 	{
-		// TODO:
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.renderPass = m_render_pass;
-		//renderPassInfo.framebuffer = m_rhi->m_swapchain_framebuffers[m_rhi->m_current_swapchain_image_index];
-		renderPassInfo.framebuffer = m_framebuffer.framebuffer;
+		renderPassInfo.framebuffer = m_rhi->m_swapchain_framebuffers[m_rhi->m_current_swapchain_image_index];
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = m_rhi->m_swapchain_extent;
 
-		std::array<VkClearValue, 5> clearValues{};
+		std::array<VkClearValue, 1> clearValues;
 		clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
-		clearValues[1].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
-		clearValues[2].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
-		clearValues[3].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
-		clearValues[4].depthStencil = { 1.0f, 0 };
-		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		renderPassInfo.clearValueCount = clearValues.size();
 		renderPassInfo.pClearValues = clearValues.data();
 
 		VkCommandBuffer& commandBuffer = m_rhi->m_command_buffers[m_rhi->m_current_frame_index];
@@ -42,73 +37,60 @@ namespace Eagle
 		m_rhi->m_vk_cmd_begin_render_pass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		m_rhi->m_vk_cmd_bind_pipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].pipeline);
 
-		memcpy(m_uniform_buffers[0].memory_pointer[m_rhi->m_current_frame_index], &m_per_frame_ubo, sizeof(m_per_frame_ubo));
+		memcpy(m_uniform_buffers[0][m_rhi->m_current_frame_index].memory_pointer, &m_per_frame_ubo, sizeof(m_per_frame_ubo));
 
-		m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 0, 1, &m_descriptors[0].descriptor_set, 0, nullptr);
+		std::array<VkDescriptorSet, 2> bind_descriptor_sets = { m_descriptors[0].descriptor_set, m_descriptors[1].descriptor_set };
+		m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 0, 2, bind_descriptor_sets.data(), 0, nullptr);
 
-		for (auto& pair : m_render_resource->m_render_nodes) {
-			auto& material = m_render_resource->m_render_materials[pair.first];
-			auto& mesh_map = pair.second;
-
-			m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 2, 1, &material.material_descriptor_set, 0, nullptr);
-
-			for (auto& node_pair : mesh_map) {
-				VulkanMesh& render_mesh = m_render_resource->m_render_meshes[node_pair.first];
-				VulkanMeshNode& render_node = node_pair.second;
-
-				m_per_draw_ubo.model_matrix = render_node.model_matrix;
-				memcpy(m_uniform_buffers[1].memory_pointer[m_rhi->m_current_frame_index], &m_per_draw_ubo, sizeof(m_per_draw_ubo));
-
-				m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 1, 1, &m_descriptors[1].descriptor_set, 0, nullptr);
-
-				VkBuffer vertexBuffers[] = { render_mesh.mesh_vertex_buffer };
-				VkDeviceSize offsets[] = { 0 };
-				m_rhi->m_vk_cmd_bind_vertex_buffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-				m_rhi->m_vk_cmd_bind_index_buffer(commandBuffer, render_mesh.mesh_index_buffer, 0, VK_INDEX_TYPE_UINT32);
-
-				m_rhi->m_vk_cmd_draw_indexed(commandBuffer, render_mesh.mesh_index_count, 1, 0, 0, 0);
-			}
-		}
-
+		m_rhi->m_vk_cmd_draw(commandBuffer, 3, 1, 0, 0);
 		m_rhi->m_vk_cmd_end_render_pass(commandBuffer);
 	}
 
 	void ShadingPass::cleanupSwapChain()
 	{
-		for (auto attachment : m_framebuffer.attachments) {
-			vkDestroyImageView(m_rhi->m_device, attachment.view, nullptr);
-		}
-
-		vkDestroyFramebuffer(m_rhi->m_device, m_framebuffer.framebuffer, nullptr);
-
-		for (auto& pipeline_base : m_render_pipelines) {
-			vkDestroyPipeline(m_rhi->m_device, pipeline_base.pipeline, nullptr);
-			vkDestroyPipelineLayout(m_rhi->m_device, pipeline_base.layout, nullptr);
-		}
-		vkDestroyRenderPass(m_rhi->m_device, m_render_pass, nullptr);
+		VulkanPass::cleanupSwapChain();
 	}
 
 	void ShadingPass::cleanup()
 	{
-		cleanupSwapChain();
+		VulkanPass::cleanup();
+	}
 
-		for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
-			vkUnmapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[i]);
-			vkDestroyBuffer(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers[i], nullptr);
-			vkFreeMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[i], nullptr);
+	void ShadingPass::setupAttachments()
+	{
+		m_framebuffer.width = m_rhi->m_swapchain_extent.width;
+		m_framebuffer.height = m_rhi->m_swapchain_extent.height;
+		m_framebuffer.attachments.resize(1);
 
-			vkUnmapMemory(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers_memory[i]);
-			vkDestroyBuffer(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers[i], nullptr);
-			vkFreeMemory(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers_memory[i], nullptr);
-		}
-		vkDestroyDescriptorSetLayout(m_rhi->m_device, m_descriptors[0].layout, nullptr);
-		vkDestroyDescriptorSetLayout(m_rhi->m_device, m_descriptors[1].layout, nullptr);
-		vkDestroyDescriptorSetLayout(m_rhi->m_device, m_descriptors[2].layout, nullptr);
+		m_framebuffer.attachments[0].format = m_rhi->m_swapchain_image_format;
+
+		VulkanUtil::createImage(m_rhi->m_physical_device,
+			m_rhi->m_device,
+			m_rhi->m_swapchain_extent.width,
+			m_rhi->m_swapchain_extent.height,
+			m_framebuffer.attachments[0].format,
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+			VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			m_framebuffer.attachments[0].image,
+			m_framebuffer.attachments[0].mem,
+			0,
+			1,
+			1);
+
+		m_framebuffer.attachments[0].view = VulkanUtil::createImageView(m_rhi->m_device,
+			m_framebuffer.attachments[0].image,
+			m_framebuffer.attachments[0].format,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			VK_IMAGE_VIEW_TYPE_2D,
+			1,
+			1);
 	}
 
 	void ShadingPass::setupRenderPass()
 	{
-		VkAttachmentDescription attachment[2];
+		std::array<VkAttachmentDescription, 1> attachment;
 
 		VkAttachmentDescription& attachment_description = attachment[0];
 		attachment_description.format = m_framebuffer.attachments[0].format;
@@ -120,29 +102,14 @@ namespace Eagle
 		attachment_description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		attachment_description.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-		VkAttachmentDescription& depth_description = attachment[1];
-		depth_description.format = m_rhi->m_depth_image_format;
-		depth_description.samples = VK_SAMPLE_COUNT_1_BIT;
-		depth_description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depth_description.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depth_description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		depth_description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depth_description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		depth_description.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentReference colorAttachmentRef[1];
-		colorAttachmentRef[0].attachment = 0;
-		colorAttachmentRef[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentReference depthAttachmentRef{};
-		depthAttachmentRef.attachment = 1;
-		depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		VkAttachmentReference colorAttachmentRef;
+		colorAttachmentRef.attachment = 0;
+		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		VkSubpassDescription subpass{};
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &colorAttachmentRef[0];
-		subpass.pDepthStencilAttachment = &depthAttachmentRef;
+		subpass.pColorAttachments = &colorAttachmentRef;
 
 		VkSubpassDependency dependency{};
 		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -154,8 +121,8 @@ namespace Eagle
 
 		VkRenderPassCreateInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderPassInfo.attachmentCount = 2;
-		renderPassInfo.pAttachments = attachment;
+		renderPassInfo.attachmentCount = attachment.size();
+		renderPassInfo.pAttachments = attachment.data();
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
 		renderPassInfo.dependencyCount = 1;
@@ -163,29 +130,6 @@ namespace Eagle
 
 		if (vkCreateRenderPass(m_rhi->m_device, &renderPassInfo, nullptr, &m_render_pass) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create render pass!");
-		}
-
-
-		m_rhi->m_swapchain_framebuffers.resize(m_rhi->m_swapchain_imageviews.size());
-
-		for (size_t i = 0; i < m_rhi->m_swapchain_imageviews.size(); i++) {
-			std::array<VkImageView, 2> attachments = {
-				m_rhi->m_swapchain_imageviews[i],
-				m_rhi->m_depth_image_view
-			};
-
-			VkFramebufferCreateInfo framebufferInfo{};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = m_render_pass;
-			framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-			framebufferInfo.pAttachments = attachments.data();
-			framebufferInfo.width = m_rhi->m_swapchain_extent.width;
-			framebufferInfo.height = m_rhi->m_swapchain_extent.height;
-			framebufferInfo.layers = 1;
-
-			if (vkCreateFramebuffer(m_rhi->m_device, &framebufferInfo, nullptr, &m_rhi->m_swapchain_framebuffers[i]) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create framebuffer!");
-			}
 		}
 	}
 
@@ -218,7 +162,7 @@ namespace Eagle
 
 			layoutBinding[0].binding = 0;
 			layoutBinding[0].descriptorCount = 1;
-			layoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			layoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			layoutBinding[0].pImmutableSamplers = nullptr;
 			layoutBinding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
@@ -248,7 +192,7 @@ namespace Eagle
 
 			VkDescriptorSetLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			layoutInfo.bindingCount = static_cast<uint32_t>(layoutBinding.size());
+			layoutInfo.bindingCount = layoutBinding.size();
 			layoutInfo.pBindings = layoutBinding.data();
 
 			if (vkCreateDescriptorSetLayout(m_rhi->m_device, &layoutInfo, nullptr, &m_descriptors[1].layout) != VK_SUCCESS) {
@@ -291,15 +235,12 @@ namespace Eagle
 
 		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-		auto bindingDescription = VulkanVertex::getBindingDescription();
-		auto attributeDescriptions = VulkanVertex::getAttributeDescriptions();
-
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexBindingDescriptionCount = 1;
-		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-		vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+		vertexInputInfo.vertexBindingDescriptionCount = 0;
+		vertexInputInfo.vertexAttributeDescriptionCount = 0;
+		vertexInputInfo.pVertexBindingDescriptions = nullptr;
+		vertexInputInfo.pVertexAttributeDescriptions = nullptr;
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -343,10 +284,8 @@ namespace Eagle
 
 		VkPipelineDepthStencilStateCreateInfo depthStencil{};
 		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depthStencil.depthTestEnable = VK_TRUE;
-		depthStencil.depthWriteEnable = VK_TRUE;
-		depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-		depthStencil.depthBoundsTestEnable = VK_FALSE;
+		depthStencil.depthTestEnable = VK_FALSE;
+		depthStencil.depthWriteEnable = VK_FALSE;
 		depthStencil.stencilTestEnable = VK_FALSE;
 
 		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
@@ -390,34 +329,26 @@ namespace Eagle
 
 	void ShadingPass::setupFramebuffers()
 	{
-		m_framebuffer.width = m_rhi->m_swapchain_extent.width;
-		m_framebuffer.height = m_rhi->m_swapchain_extent.height;
-		m_framebuffer.attachments.resize(1);
+		m_rhi->m_swapchain_framebuffers.resize(m_rhi->m_swapchain_imageviews.size());
 
-		m_framebuffer.attachments[0].format = m_rhi->m_swapchain_image_format;
+		for (size_t i = 0; i < m_rhi->m_swapchain_imageviews.size(); i++) {
+			std::array<VkImageView, 1> attachments = {
+				m_rhi->m_swapchain_imageviews[i]
+			};
 
-		VulkanUtil::createImage(m_rhi->m_physical_device,
-			m_rhi->m_device,
-			m_rhi->m_swapchain_extent.width,
-			m_rhi->m_swapchain_extent.height,
-			m_framebuffer.attachments[0].format,
-			VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
-			VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			m_framebuffer.attachments[0].image,
-			m_framebuffer.attachments[0].mem,
-			0,
-			1,
-			1);
+			VkFramebufferCreateInfo framebufferInfo{};
+			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			framebufferInfo.renderPass = m_render_pass;
+			framebufferInfo.attachmentCount = attachments.size();
+			framebufferInfo.pAttachments = attachments.data();
+			framebufferInfo.width = m_rhi->m_swapchain_extent.width;
+			framebufferInfo.height = m_rhi->m_swapchain_extent.height;
+			framebufferInfo.layers = 1;
 
-		m_framebuffer.attachments[0].view = VulkanUtil::createImageView(m_rhi->m_device,
-			m_framebuffer.attachments[0].image,
-			m_framebuffer.attachments[0].format,
-			VK_IMAGE_ASPECT_COLOR_BIT,
-			VK_IMAGE_VIEW_TYPE_2D,
-			1,
-			1);
+			if (vkCreateFramebuffer(m_rhi->m_device, &framebufferInfo, nullptr, &m_rhi->m_swapchain_framebuffers[i]) != VK_SUCCESS) {
+				throw std::runtime_error("failed to create framebuffer!");
+			}
+		}
 	}
 
 	void ShadingPass::setupUniformBuffers()
@@ -427,9 +358,7 @@ namespace Eagle
 		{
 			VkDeviceSize bufferSize = sizeof(MeshPerFrameUBO);
 
-			m_uniform_buffers[0].uniform_buffers.resize(m_rhi->m_max_frames_in_flight);
-			m_uniform_buffers[0].uniform_buffers_memory.resize(m_rhi->m_max_frames_in_flight);
-			m_uniform_buffers[0].memory_pointer.resize(m_rhi->m_max_frames_in_flight);
+			m_uniform_buffers[0].resize(m_rhi->m_max_frames_in_flight);
 
 			for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
 				VulkanUtil::createBuffer(
@@ -438,19 +367,17 @@ namespace Eagle
 					bufferSize,
 					VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_uniform_buffers[0].uniform_buffers[i],
-					m_uniform_buffers[0].uniform_buffers_memory[i]
+					m_uniform_buffers[0][i].uniform_buffers,
+					m_uniform_buffers[0][i].uniform_buffers_memory
 				);
-				vkMapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[i], 0, sizeof(MeshPerFrameUBO), 0, &m_uniform_buffers[0].memory_pointer[i]);
+				vkMapMemory(m_rhi->m_device, m_uniform_buffers[0][i].uniform_buffers_memory, 0, sizeof(MeshPerFrameUBO), 0, &m_uniform_buffers[0][i].memory_pointer);
 			}
 		}
 
 		{
 			VkDeviceSize bufferSize = sizeof(MeshPerMaterialUBO);
 
-			m_uniform_buffers[1].uniform_buffers.resize(m_rhi->m_max_frames_in_flight);
-			m_uniform_buffers[1].uniform_buffers_memory.resize(m_rhi->m_max_frames_in_flight);
-			m_uniform_buffers[1].memory_pointer.resize(m_rhi->m_max_frames_in_flight);
+			m_uniform_buffers[1].resize(m_rhi->m_max_frames_in_flight);
 
 			for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
 				VulkanUtil::createBuffer(
@@ -459,10 +386,10 @@ namespace Eagle
 					bufferSize,
 					VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_uniform_buffers[1].uniform_buffers[i],
-					m_uniform_buffers[1].uniform_buffers_memory[i]
+					m_uniform_buffers[1][i].uniform_buffers,
+					m_uniform_buffers[1][i].uniform_buffers_memory
 				);
-				vkMapMemory(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers_memory[i], 0, sizeof(MeshPerMaterialUBO), 0, &m_uniform_buffers[1].memory_pointer[i]);
+				vkMapMemory(m_rhi->m_device, m_uniform_buffers[1][i].uniform_buffers_memory, 0, sizeof(MeshPerMaterialUBO), 0, &m_uniform_buffers[1][i].memory_pointer);
 			}
 		}
 	}
@@ -482,7 +409,7 @@ namespace Eagle
 
 			for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
 				VkDescriptorBufferInfo bufferInfo{};
-				bufferInfo.buffer = m_uniform_buffers[0].uniform_buffers[i];
+				bufferInfo.buffer = m_uniform_buffers[0][i].uniform_buffers;
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(MeshPerFrameUBO);
 
@@ -510,92 +437,84 @@ namespace Eagle
 				throw std::runtime_error("failed to allocate descriptor sets!");
 			}
 
-			// TODO: need to be fixed: framebuffer from GBuffer
-			auto framebuffer = m_framebuffer;
-			VkDescriptorImageInfo gbuffer_normal_input_attachment_info = {};
-			gbuffer_normal_input_attachment_info.sampler =
-				VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
-			gbuffer_normal_input_attachment_info.imageView = m_framebuffer.attachments[0].view;
-			gbuffer_normal_input_attachment_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			VkDescriptorImageInfo gbuffer_position_info = {};
+			gbuffer_position_info.sampler = VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
+			gbuffer_position_info.imageView = m_gbuffer_ptr->attachments[0].view;
+			gbuffer_position_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-			VkDescriptorImageInfo gbuffer_metallic_roughness_shadingmodeid_input_attachment_info = {};
-			gbuffer_metallic_roughness_shadingmodeid_input_attachment_info.sampler =
-				VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
-			gbuffer_metallic_roughness_shadingmodeid_input_attachment_info.imageView =
-				m_framebuffer.attachments[1].view;
-			gbuffer_metallic_roughness_shadingmodeid_input_attachment_info.imageLayout =
-				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			VkDescriptorImageInfo gbuffer_normal_info = {};
+			gbuffer_normal_info.sampler = VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
+			gbuffer_normal_info.imageView = m_gbuffer_ptr->attachments[1].view;
+			gbuffer_normal_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-			VkDescriptorImageInfo gbuffer_albedo_input_attachment_info = {};
-			gbuffer_albedo_input_attachment_info.sampler =
-				VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
-			gbuffer_albedo_input_attachment_info.imageView = m_framebuffer.attachments[2].view;
-			gbuffer_albedo_input_attachment_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			VkDescriptorImageInfo gbuffer_base_color_info = {};
+			gbuffer_base_color_info.sampler = VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
+			gbuffer_base_color_info.imageView = m_gbuffer_ptr->attachments[2].view;
+			gbuffer_base_color_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-			VkDescriptorImageInfo depth_input_attachment_info = {};
-			depth_input_attachment_info.sampler =
-				VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
-			depth_input_attachment_info.imageView = m_rhi->m_depth_image_view;
-			depth_input_attachment_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			VkDescriptorImageInfo gbuffer_specular_info = {};
+			gbuffer_specular_info.sampler = VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
+			gbuffer_specular_info.imageView = m_gbuffer_ptr->attachments[3].view;
+			gbuffer_specular_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-			VkWriteDescriptorSet deferred_lighting_descriptor_writes_info[4];
+			VkDescriptorImageInfo depth_info = {};
+			depth_info.sampler = VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
+			depth_info.imageView = m_rhi->m_depth_image_view;
+			depth_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-			VkWriteDescriptorSet& gbuffer_normal_descriptor_input_attachment_write_info =
-				deferred_lighting_descriptor_writes_info[0];
-			gbuffer_normal_descriptor_input_attachment_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			gbuffer_normal_descriptor_input_attachment_write_info.pNext = NULL;
-			gbuffer_normal_descriptor_input_attachment_write_info.dstSet =
-				m_descriptors[1].descriptor_set;
-			gbuffer_normal_descriptor_input_attachment_write_info.dstBinding = 0;
-			gbuffer_normal_descriptor_input_attachment_write_info.dstArrayElement = 0;
-			gbuffer_normal_descriptor_input_attachment_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-			gbuffer_normal_descriptor_input_attachment_write_info.descriptorCount = 1;
-			gbuffer_normal_descriptor_input_attachment_write_info.pImageInfo = &gbuffer_normal_input_attachment_info;
+			VkWriteDescriptorSet shading_write_info[5];
 
-			VkWriteDescriptorSet& gbuffer_metallic_roughness_shadingmodeid_descriptor_input_attachment_write_info =
-				deferred_lighting_descriptor_writes_info[1];
-			gbuffer_metallic_roughness_shadingmodeid_descriptor_input_attachment_write_info.sType =
-				VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			gbuffer_metallic_roughness_shadingmodeid_descriptor_input_attachment_write_info.pNext = NULL;
-			gbuffer_metallic_roughness_shadingmodeid_descriptor_input_attachment_write_info.dstSet =
-				m_descriptors[1].descriptor_set;
-			gbuffer_metallic_roughness_shadingmodeid_descriptor_input_attachment_write_info.dstBinding = 1;
-			gbuffer_metallic_roughness_shadingmodeid_descriptor_input_attachment_write_info.dstArrayElement = 0;
-			gbuffer_metallic_roughness_shadingmodeid_descriptor_input_attachment_write_info.descriptorType =
-				VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-			gbuffer_metallic_roughness_shadingmodeid_descriptor_input_attachment_write_info.descriptorCount = 1;
-			gbuffer_metallic_roughness_shadingmodeid_descriptor_input_attachment_write_info.pImageInfo =
-				&gbuffer_metallic_roughness_shadingmodeid_input_attachment_info;
+			VkWriteDescriptorSet& gbuffer_position_write_info = shading_write_info[0];
+			gbuffer_position_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			gbuffer_position_write_info.pNext = NULL;
+			gbuffer_position_write_info.dstSet = m_descriptors[1].descriptor_set;
+			gbuffer_position_write_info.dstBinding = 0;
+			gbuffer_position_write_info.dstArrayElement = 0;
+			gbuffer_position_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+			gbuffer_position_write_info.descriptorCount = 1;
+			gbuffer_position_write_info.pImageInfo = &gbuffer_position_info;
 
-			VkWriteDescriptorSet& gbuffer_albedo_descriptor_input_attachment_write_info =
-				deferred_lighting_descriptor_writes_info[2];
-			gbuffer_albedo_descriptor_input_attachment_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			gbuffer_albedo_descriptor_input_attachment_write_info.pNext = NULL;
-			gbuffer_albedo_descriptor_input_attachment_write_info.dstSet =
-				m_descriptors[1].descriptor_set;
-			gbuffer_albedo_descriptor_input_attachment_write_info.dstBinding = 2;
-			gbuffer_albedo_descriptor_input_attachment_write_info.dstArrayElement = 0;
-			gbuffer_albedo_descriptor_input_attachment_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-			gbuffer_albedo_descriptor_input_attachment_write_info.descriptorCount = 1;
-			gbuffer_albedo_descriptor_input_attachment_write_info.pImageInfo = &gbuffer_albedo_input_attachment_info;
+			VkWriteDescriptorSet& gbuffer_normal_write_info = shading_write_info[1];
+			gbuffer_normal_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			gbuffer_normal_write_info.pNext = NULL;
+			gbuffer_normal_write_info.dstSet = m_descriptors[1].descriptor_set;
+			gbuffer_normal_write_info.dstBinding = 1;
+			gbuffer_normal_write_info.dstArrayElement = 0;
+			gbuffer_normal_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+			gbuffer_normal_write_info.descriptorCount = 1;
+			gbuffer_normal_write_info.pImageInfo = &gbuffer_normal_info;
 
-			VkWriteDescriptorSet& depth_descriptor_input_attachment_write_info =
-				deferred_lighting_descriptor_writes_info[3];
-			depth_descriptor_input_attachment_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			depth_descriptor_input_attachment_write_info.pNext = NULL;
-			depth_descriptor_input_attachment_write_info.dstSet = m_descriptors[1].descriptor_set;
-			depth_descriptor_input_attachment_write_info.dstBinding = 3;
-			depth_descriptor_input_attachment_write_info.dstArrayElement = 0;
-			depth_descriptor_input_attachment_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-			depth_descriptor_input_attachment_write_info.descriptorCount = 1;
-			depth_descriptor_input_attachment_write_info.pImageInfo = &depth_input_attachment_info;
+			VkWriteDescriptorSet& gbuffer_base_color_write_info = shading_write_info[2];
+			gbuffer_base_color_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			gbuffer_base_color_write_info.pNext = NULL;
+			gbuffer_base_color_write_info.dstSet = m_descriptors[1].descriptor_set;
+			gbuffer_base_color_write_info.dstBinding = 2;
+			gbuffer_base_color_write_info.dstArrayElement = 0;
+			gbuffer_base_color_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+			gbuffer_base_color_write_info.descriptorCount = 1;
+			gbuffer_base_color_write_info.pImageInfo = &gbuffer_base_color_info;
 
-			vkUpdateDescriptorSets(m_rhi->m_device,
-				sizeof(deferred_lighting_descriptor_writes_info) /
-				sizeof(deferred_lighting_descriptor_writes_info[0]),
-				deferred_lighting_descriptor_writes_info,
-				0,
-				NULL);
+			VkWriteDescriptorSet& gbuffer_specular_write_info = shading_write_info[3];
+			gbuffer_specular_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			gbuffer_specular_write_info.pNext = NULL;
+			gbuffer_specular_write_info.dstSet = m_descriptors[1].descriptor_set;
+			gbuffer_specular_write_info.dstBinding = 3;
+			gbuffer_specular_write_info.dstArrayElement = 0;
+			gbuffer_specular_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+			gbuffer_specular_write_info.descriptorCount = 1;
+			gbuffer_specular_write_info.pImageInfo = &gbuffer_base_color_info;
+
+			VkWriteDescriptorSet& depth_write_info = shading_write_info[4];
+			depth_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			depth_write_info.pNext = NULL;
+			depth_write_info.dstSet = m_descriptors[1].descriptor_set;
+			depth_write_info.dstBinding = 4;
+			depth_write_info.dstArrayElement = 0;
+			depth_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+			depth_write_info.descriptorCount = 1;
+			depth_write_info.pImageInfo = &depth_info;
+
+			vkUpdateDescriptorSets(m_rhi->m_device, 5, shading_write_info, 0, nullptr);
 		}
 	}
 

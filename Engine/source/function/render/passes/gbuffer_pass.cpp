@@ -6,11 +6,11 @@ namespace Eagle
 {
 	void GBufferPass::initialize(GBufferPassInitInfo init_info)
 	{
-		m_rhi = init_info.rhi;
-		m_render_resource = init_info.render_resource;
+		VulkanPass::initialize({ init_info.rhi , init_info.render_resource });
 
-		setupFramebuffers();
+		setupAttachments();
 		setupRenderPass();
+		setupFramebuffers();
 		setupDescriptorSetLayout();
 		setupPipelines();
 		setupUniformBuffers();
@@ -22,7 +22,6 @@ namespace Eagle
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.renderPass = m_render_pass;
-		//renderPassInfo.framebuffer = m_rhi->m_swapchain_framebuffers[m_rhi->m_current_swapchain_image_index];
 		renderPassInfo.framebuffer = m_framebuffer.framebuffer;
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = m_rhi->m_swapchain_extent;
@@ -41,7 +40,7 @@ namespace Eagle
 		m_rhi->m_vk_cmd_begin_render_pass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		m_rhi->m_vk_cmd_bind_pipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].pipeline);
 
-		memcpy(m_uniform_buffers[0].memory_pointer[m_rhi->m_current_frame_index], &m_per_frame_ubo, sizeof(m_per_frame_ubo));
+		memcpy(m_uniform_buffers[0][m_rhi->m_current_frame_index].memory_pointer, &m_per_frame_ubo, sizeof(m_per_frame_ubo));
 
 		m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 0, 1, &m_descriptors[0].descriptor_set, 0, nullptr);
 
@@ -56,7 +55,7 @@ namespace Eagle
 				VulkanMeshNode& render_node = node_pair.second;
 
 				m_per_draw_ubo.model_matrix = render_node.model_matrix;
-				memcpy(m_uniform_buffers[1].memory_pointer[m_rhi->m_current_frame_index], &m_per_draw_ubo, sizeof(m_per_draw_ubo));
+				memcpy(m_uniform_buffers[1][m_rhi->m_current_frame_index].memory_pointer, &m_per_draw_ubo, sizeof(m_per_draw_ubo));
 
 				m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 1, 1, &m_descriptors[1].descriptor_set, 0, nullptr);
 
@@ -74,35 +73,50 @@ namespace Eagle
 
 	void GBufferPass::cleanupSwapChain()
 	{
-		for (auto attachment : m_framebuffer.attachments) {
-			vkDestroyImageView(m_rhi->m_device, attachment.view, nullptr);
-		}
-
-		vkDestroyFramebuffer(m_rhi->m_device, m_framebuffer.framebuffer, nullptr);
-
-		for (auto& pipeline_base : m_render_pipelines) {
-			vkDestroyPipeline(m_rhi->m_device, pipeline_base.pipeline, nullptr);
-			vkDestroyPipelineLayout(m_rhi->m_device, pipeline_base.layout, nullptr);
-		}
-		vkDestroyRenderPass(m_rhi->m_device, m_render_pass, nullptr);
+		VulkanPass::cleanupSwapChain();
 	}
 
 	void GBufferPass::cleanup()
 	{
-		cleanupSwapChain();
+		VulkanPass::cleanup();
+	}
 
-		for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
-			vkUnmapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[i]);
-			vkDestroyBuffer(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers[i], nullptr);
-			vkFreeMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[i], nullptr);
+	void GBufferPass::setupAttachments()
+	{
+		m_framebuffer.width = m_rhi->m_swapchain_extent.width;
+		m_framebuffer.height = m_rhi->m_swapchain_extent.height;
+		m_framebuffer.attachments.resize(4);
 
-			vkUnmapMemory(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers_memory[i]);
-			vkDestroyBuffer(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers[i], nullptr);
-			vkFreeMemory(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers_memory[i], nullptr);
+		m_framebuffer.attachments[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		m_framebuffer.attachments[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		m_framebuffer.attachments[2].format = VK_FORMAT_R8G8B8A8_SRGB;
+		m_framebuffer.attachments[3].format = VK_FORMAT_R8G8B8A8_SRGB;
+
+		for (int i = 0; i < 4; ++i)
+		{
+			VulkanUtil::createImage(m_rhi->m_physical_device,
+				m_rhi->m_device,
+				m_rhi->m_swapchain_extent.width,
+				m_rhi->m_swapchain_extent.height,
+				m_framebuffer.attachments[i].format,
+				VK_IMAGE_TILING_OPTIMAL,
+				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+				VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				m_framebuffer.attachments[i].image,
+				m_framebuffer.attachments[i].mem,
+				0,
+				1,
+				1);
+
+			m_framebuffer.attachments[i].view = VulkanUtil::createImageView(m_rhi->m_device,
+				m_framebuffer.attachments[i].image,
+				m_framebuffer.attachments[i].format,
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_IMAGE_VIEW_TYPE_2D,
+				1,
+				1);
 		}
-		vkDestroyDescriptorSetLayout(m_rhi->m_device, m_descriptors[0].layout, nullptr);
-		vkDestroyDescriptorSetLayout(m_rhi->m_device, m_descriptors[1].layout, nullptr);
-		vkDestroyDescriptorSetLayout(m_rhi->m_device, m_descriptors[2].layout, nullptr);
 	}
 
 	void GBufferPass::setupRenderPass()
@@ -198,52 +212,6 @@ namespace Eagle
 
 		if (vkCreateRenderPass(m_rhi->m_device, &renderPassInfo, nullptr, &m_render_pass) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create render pass!");
-		}
-
-
-		std::array<VkImageView, 5> attachments = {
-			//m_rhi->m_swapchain_imageviews[0],
-			m_framebuffer.attachments[0].view,
-			//m_rhi->m_swapchain_imageviews[1],
-			m_framebuffer.attachments[1].view,
-			m_framebuffer.attachments[2].view,
-			m_framebuffer.attachments[3].view,
-			m_rhi->m_depth_image_view
-		};
-
-		VkFramebufferCreateInfo framebufferInfo{};
-		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferInfo.renderPass = m_render_pass;
-		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-		framebufferInfo.pAttachments = attachments.data();
-		framebufferInfo.width = m_rhi->m_swapchain_extent.width;
-		framebufferInfo.height = m_rhi->m_swapchain_extent.height;
-		framebufferInfo.layers = 1;
-
-		if (vkCreateFramebuffer(m_rhi->m_device, &framebufferInfo, nullptr, &m_framebuffer.framebuffer) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create framebuffer!");
-		}
-
-		m_rhi->m_swapchain_framebuffers.resize(m_rhi->m_swapchain_imageviews.size());
-
-		for (size_t i = 0; i < m_rhi->m_swapchain_imageviews.size(); i++) {
-			std::array<VkImageView, 2> attachments = {
-				m_rhi->m_swapchain_imageviews[i],
-				m_rhi->m_depth_image_view
-			};
-
-			VkFramebufferCreateInfo framebufferInfo{};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = m_render_pass;
-			framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-			framebufferInfo.pAttachments = attachments.data();
-			framebufferInfo.width = m_rhi->m_swapchain_extent.width;
-			framebufferInfo.height = m_rhi->m_swapchain_extent.height;
-			framebufferInfo.layers = 1;
-
-			if (vkCreateFramebuffer(m_rhi->m_device, &framebufferInfo, nullptr, &m_rhi->m_swapchain_framebuffers[i]) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create framebuffer!");
-			}
 		}
 	}
 
@@ -470,41 +438,26 @@ namespace Eagle
 
 	void GBufferPass::setupFramebuffers()
 	{
-		m_framebuffer.width = m_rhi->m_swapchain_extent.width;
-		m_framebuffer.height = m_rhi->m_swapchain_extent.height;
-        m_framebuffer.attachments.resize(4);
+		std::array<VkImageView, 5> attachments = {
+			m_framebuffer.attachments[0].view,
+			m_framebuffer.attachments[1].view,
+			m_framebuffer.attachments[2].view,
+			m_framebuffer.attachments[3].view,
+			m_rhi->m_depth_image_view
+		};
 
-        m_framebuffer.attachments[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-		//m_framebuffer.attachments[0].format = m_rhi->m_swapchain_image_format;
-        m_framebuffer.attachments[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-        m_framebuffer.attachments[2].format = VK_FORMAT_R8G8B8A8_SRGB;
-        m_framebuffer.attachments[3].format = VK_FORMAT_R8G8B8A8_SRGB;
+		VkFramebufferCreateInfo framebufferInfo{};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = m_render_pass;
+		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebufferInfo.pAttachments = attachments.data();
+		framebufferInfo.width = m_rhi->m_swapchain_extent.width;
+		framebufferInfo.height = m_rhi->m_swapchain_extent.height;
+		framebufferInfo.layers = 1;
 
-        for (int i = 0; i < 4; ++i)
-        {
-            VulkanUtil::createImage(m_rhi->m_physical_device,
-                m_rhi->m_device,
-                m_rhi->m_swapchain_extent.width,
-                m_rhi->m_swapchain_extent.height,
-                m_framebuffer.attachments[i].format,
-                VK_IMAGE_TILING_OPTIMAL,
-                VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
-                VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                m_framebuffer.attachments[i].image,
-                m_framebuffer.attachments[i].mem,
-                0,
-                1,
-                1);
-
-            m_framebuffer.attachments[i].view = VulkanUtil::createImageView(m_rhi->m_device,
-                m_framebuffer.attachments[i].image,
-                m_framebuffer.attachments[i].format,
-                VK_IMAGE_ASPECT_COLOR_BIT,
-                VK_IMAGE_VIEW_TYPE_2D,
-                1,
-                1);
-        }
+		if (vkCreateFramebuffer(m_rhi->m_device, &framebufferInfo, nullptr, &m_framebuffer.framebuffer) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create framebuffer!");
+		}
 	}
 
 	void GBufferPass::setupUniformBuffers()
@@ -514,9 +467,7 @@ namespace Eagle
 		{
 			VkDeviceSize bufferSize = sizeof(MeshPerFrameUBO);
 
-			m_uniform_buffers[0].uniform_buffers.resize(m_rhi->m_max_frames_in_flight);
-			m_uniform_buffers[0].uniform_buffers_memory.resize(m_rhi->m_max_frames_in_flight);
-			m_uniform_buffers[0].memory_pointer.resize(m_rhi->m_max_frames_in_flight);
+			m_uniform_buffers[0].resize(m_rhi->m_max_frames_in_flight);
 
 			for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
 				VulkanUtil::createBuffer(
@@ -525,19 +476,17 @@ namespace Eagle
 					bufferSize,
 					VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_uniform_buffers[0].uniform_buffers[i],
-					m_uniform_buffers[0].uniform_buffers_memory[i]
+					m_uniform_buffers[0][i].uniform_buffers,
+					m_uniform_buffers[0][i].uniform_buffers_memory
 				);
-				vkMapMemory(m_rhi->m_device, m_uniform_buffers[0].uniform_buffers_memory[i], 0, sizeof(MeshPerFrameUBO), 0, &m_uniform_buffers[0].memory_pointer[i]);
+				vkMapMemory(m_rhi->m_device, m_uniform_buffers[0][i].uniform_buffers_memory, 0, sizeof(MeshPerFrameUBO), 0, &m_uniform_buffers[0][i].memory_pointer);
 			}
 		}
 
 		{
 			VkDeviceSize bufferSize = sizeof(MeshPerDrawUBO);
 
-			m_uniform_buffers[1].uniform_buffers.resize(m_rhi->m_max_frames_in_flight);
-			m_uniform_buffers[1].uniform_buffers_memory.resize(m_rhi->m_max_frames_in_flight);
-			m_uniform_buffers[1].memory_pointer.resize(m_rhi->m_max_frames_in_flight);
+			m_uniform_buffers[1].resize(m_rhi->m_max_frames_in_flight);
 
 			for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
 				VulkanUtil::createBuffer(
@@ -546,10 +495,10 @@ namespace Eagle
 					bufferSize,
 					VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_uniform_buffers[1].uniform_buffers[i],
-					m_uniform_buffers[1].uniform_buffers_memory[i]
+					m_uniform_buffers[1][i].uniform_buffers,
+					m_uniform_buffers[1][i].uniform_buffers_memory
 				);
-				vkMapMemory(m_rhi->m_device, m_uniform_buffers[1].uniform_buffers_memory[i], 0, sizeof(MeshPerDrawUBO), 0, &m_uniform_buffers[1].memory_pointer[i]);
+				vkMapMemory(m_rhi->m_device, m_uniform_buffers[1][i].uniform_buffers_memory, 0, sizeof(MeshPerDrawUBO), 0, &m_uniform_buffers[1][i].memory_pointer);
 			}
 		}
 	}
@@ -569,7 +518,7 @@ namespace Eagle
 
 			for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
 				VkDescriptorBufferInfo bufferInfo{};
-				bufferInfo.buffer = m_uniform_buffers[0].uniform_buffers[i];
+				bufferInfo.buffer = m_uniform_buffers[0][i].uniform_buffers;
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(MeshPerFrameUBO);
 
@@ -599,7 +548,7 @@ namespace Eagle
 
 			for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
 				VkDescriptorBufferInfo bufferInfo{};
-				bufferInfo.buffer = m_uniform_buffers[1].uniform_buffers[i];
+				bufferInfo.buffer = m_uniform_buffers[1][i].uniform_buffers;
 				bufferInfo.offset = 0;
 				bufferInfo.range = sizeof(MeshPerDrawUBO);
 
@@ -621,8 +570,9 @@ namespace Eagle
 	{
 		cleanupSwapChain();
 
+		setupAttachments();
 		setupRenderPass();
-		setupPipelines();
 		setupFramebuffers();
+		setupPipelines();
 	}
 }

@@ -1,8 +1,7 @@
 #pragma once
 
-#include "function/render/render_pass.h"
-
-//#include "function/render/gbuffer_pass.h"
+#include "function/render/rhi/rhi.h"
+#include "function/render/render_resource.h"
 
 namespace Eagle
 {
@@ -26,6 +25,10 @@ namespace Eagle
 
 		std::shared_ptr<RHI> m_rhi;
 
-		std::shared_ptr<RenderPass> m_main_pass;
+		//std::shared_ptr<RenderPass> m_main_pass;
+		std::shared_ptr<GBufferPass> m_gbuffer_pass;
+		std::shared_ptr<ShadingPass> m_shading_pass;
+
+		std::shared_ptr<RenderResource> m_render_resource;
 	};
 }

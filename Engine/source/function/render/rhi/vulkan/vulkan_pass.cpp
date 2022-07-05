@@ -1,4 +1,51 @@
-#include "function/global/global_resource.h"
+#include "function/render/rhi/vulkan/vulkan_pass.h"
+
+namespace Eagle
+{
+    void VulkanPass::initialize(VulkanPassInitInfo init_info)
+    {
+        m_rhi = init_info.rhi;
+        m_render_resource = init_info.render_resource;
+    }
+
+    void VulkanPass::cleanupSwapChain()
+    {
+        for (auto attachment : m_framebuffer.attachments) {
+            vkDestroyImageView(m_rhi->m_device, attachment.view, nullptr);
+        }
+        vkDestroyFramebuffer(m_rhi->m_device, m_framebuffer.framebuffer, nullptr);
+
+        for (auto& pipeline_base : m_render_pipelines) {
+            vkDestroyPipeline(m_rhi->m_device, pipeline_base.pipeline, nullptr);
+            vkDestroyPipelineLayout(m_rhi->m_device, pipeline_base.layout, nullptr);
+        }
+        vkDestroyRenderPass(m_rhi->m_device, m_render_pass, nullptr);
+    }
+
+    void VulkanPass::cleanup()
+    {
+        cleanupSwapChain();
+
+        for (size_t i = 0; i < m_uniform_buffers.size(); i++) {
+            for (size_t j = 0; j < m_uniform_buffers[i].size(); j++) {
+                vkUnmapMemory(m_rhi->m_device, m_uniform_buffers[i][j].uniform_buffers_memory);
+                vkDestroyBuffer(m_rhi->m_device, m_uniform_buffers[i][j].uniform_buffers, nullptr);
+                vkFreeMemory(m_rhi->m_device, m_uniform_buffers[i][j].uniform_buffers_memory, nullptr);
+
+                vkUnmapMemory(m_rhi->m_device, m_uniform_buffers[i][j].uniform_buffers_memory);
+                vkDestroyBuffer(m_rhi->m_device, m_uniform_buffers[i][j].uniform_buffers, nullptr);
+                vkFreeMemory(m_rhi->m_device, m_uniform_buffers[i][j].uniform_buffers_memory, nullptr);
+            }
+        }
+
+        for (size_t i = 0; i < m_descriptors.size(); i++) {
+            vkDestroyDescriptorSetLayout(m_rhi->m_device, m_descriptors[i].layout, nullptr);
+        }
+    }
+}
+
+
+/*#include "function/global/global_resource.h"
 
 #include "function/render/rhi/vulkan/vulkan_pass.h"
 
@@ -535,4 +582,4 @@ namespace Eagle
         setupPipelines();
         setupFramebuffers();
     }
-}
+}*/

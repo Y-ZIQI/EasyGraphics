@@ -124,6 +124,12 @@
     <ClInclude Include="source\function\render\passes\gbuffer_pass.h">
       <Filter>function\render\passes</Filter>
     </ClInclude>
+    <ClInclude Include="source\function\render\passes\shading_pass.h">
+      <Filter>function\render\passes</Filter>
+    </ClInclude>
+    <ClInclude Include="source\function\render\rhi\vulkan\vulkan_pass.h">
+      <Filter>function\render\rhi\vulkan</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\engine.cpp" />
@@ -180,6 +186,12 @@
     </ClCompile>
     <ClCompile Include="source\function\render\passes\gbuffer_pass.cpp">
       <Filter>function\render\passes</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\render\passes\shading_pass.cpp">
+      <Filter>function\render\passes</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\render\rhi\vulkan\vulkan_pass.cpp">
+      <Filter>function\render\rhi\vulkan</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

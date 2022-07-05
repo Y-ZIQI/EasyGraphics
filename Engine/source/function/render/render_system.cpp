@@ -4,17 +4,14 @@ namespace Eagle
 {
 	void RenderSystem::initialize(RenderSystemInitInfo init_info)
 	{
-		RHIInitInfo rhi_init_info;
-		rhi_init_info.window_system = init_info.window_system;
 		m_rhi = std::make_shared<RHI>();
-		m_rhi->initialize(rhi_init_info);
+		m_rhi->initialize({ init_info.window_system });
 
 		m_render_resource = std::make_shared<RenderResource>();
 		m_render_resource->initialize({ m_rhi });
 
 		m_render_pipeline = std::make_shared<RenderPipeline>();
-		RenderPipelineInitInfo pipeline_info{ m_rhi, m_render_resource };
-		m_render_pipeline->initialize(pipeline_info);
+		m_render_pipeline->initialize({ m_rhi, m_render_resource });
 	}
 
 	void RenderSystem::tick()

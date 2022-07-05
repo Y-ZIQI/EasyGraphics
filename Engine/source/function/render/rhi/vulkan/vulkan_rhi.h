@@ -95,6 +95,7 @@ namespace Eagle
         PFN_vkCmdBindIndexBuffer    m_vk_cmd_bind_index_buffer;
         PFN_vkCmdBindDescriptorSets m_vk_cmd_bind_descriptor_sets;
         PFN_vkCmdDrawIndexed        m_vk_cmd_draw_indexed;
+        PFN_vkCmdDraw               m_vk_cmd_draw;
         PFN_vkCmdClearAttachments   m_vk_cmd_clear_attachments;
 
         bool m_framebuffer_resized = false;
