@@ -24,9 +24,9 @@ namespace Eagle
 			return true;
 		}
 		// GBuffer Pass
-		auto& m_scene = m_render_resource->m_current_scene;
-		m_gbuffer_pass->m_per_frame_ubo.proj_view_matrix = m_scene->m_cameras[0].getViewProj();
-		for (auto& pair : m_render_resource->m_current_scene->m_material_meshes) {
+		//auto& m_scene = m_render_resource->m_current_scene;
+		//m_gbuffer_pass->m_per_frame_ubo.proj_view_matrix = m_scene->m_cameras[0].getViewProj();
+		/*for (auto& pair : m_render_resource->m_current_scene->m_material_meshes) {
 			auto& mat_id = pair.first;
 			auto& mesh_set = pair.second;
 			for (auto& mesh_id : mesh_set) {
@@ -36,11 +36,11 @@ namespace Eagle
 					mat_id
 				};
 			}
-		}
-		m_gbuffer_pass->draw();
+		}*/
+		//m_gbuffer_pass->draw();
 
 		// Shading Pass
-		m_shading_pass->m_per_frame_ubo.proj_view_matrix = m_scene->m_cameras[0].getViewProj();
+		//m_shading_pass->m_per_frame_ubo.proj_view_matrix = m_scene->m_cameras[0].getViewProj();
 		m_shading_pass->draw();
 		//m_main_pass->updateUniforms();
 		//m_main_pass->render();
@@ -51,14 +51,14 @@ namespace Eagle
 	void RenderPipeline::cleanup()
 	{
 		//m_main_pass->cleanup();
-		m_gbuffer_pass->cleanup();
+		//m_gbuffer_pass->cleanup();
 		m_shading_pass->cleanup();
 	}
 
 	void RenderPipeline::recreateSwapChain()
 	{
 		m_rhi->recreateSwapChain();
-		m_gbuffer_pass->updateRecreateSwapChain();
+		//m_gbuffer_pass->updateRecreateSwapChain();
 		m_shading_pass->updateRecreateSwapChain();
 		//m_main_pass->updateRecreateSwapChain();
 	}

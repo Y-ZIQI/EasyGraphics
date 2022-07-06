@@ -35,5 +35,5 @@ void main() {
     vec4 baseColor = texture(baseColorTex, fragTexCoord);
     vec4 specular = texture(specularTex, fragTexCoord);
     outColor = vec4(position.r, normal.g, baseColor.b, 1.0);
-    outColor = vec4(1.0, 0.0, 0.0, 1.0);
+    outColor = vec4(fragTexCoord, 0.0, 1.0);
 }
