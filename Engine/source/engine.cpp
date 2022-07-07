@@ -12,7 +12,7 @@ namespace Eagle
 	{
 		while (!g_global_context.m_window_system->windowShouldClose()) {
 			g_global_context.m_window_system->pollEvents();
-			//g_global_context.m_world_manager->tick();
+			g_global_context.m_world_manager->tick();
 			g_global_context.m_render_system->tick();
 		}
 	}

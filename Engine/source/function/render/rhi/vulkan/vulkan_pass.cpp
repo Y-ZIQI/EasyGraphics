@@ -31,10 +31,6 @@ namespace Eagle
                 vkUnmapMemory(m_rhi->m_device, m_uniform_buffers[i][j].uniform_buffers_memory);
                 vkDestroyBuffer(m_rhi->m_device, m_uniform_buffers[i][j].uniform_buffers, nullptr);
                 vkFreeMemory(m_rhi->m_device, m_uniform_buffers[i][j].uniform_buffers_memory, nullptr);
-
-                vkUnmapMemory(m_rhi->m_device, m_uniform_buffers[i][j].uniform_buffers_memory);
-                vkDestroyBuffer(m_rhi->m_device, m_uniform_buffers[i][j].uniform_buffers, nullptr);
-                vkFreeMemory(m_rhi->m_device, m_uniform_buffers[i][j].uniform_buffers_memory, nullptr);
             }
         }
 

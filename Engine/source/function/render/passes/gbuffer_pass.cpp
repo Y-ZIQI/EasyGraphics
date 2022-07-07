@@ -127,7 +127,7 @@ namespace Eagle
 		gbuffer_position_description.format = m_framebuffer.attachments[0].format;
 		gbuffer_position_description.samples = VK_SAMPLE_COUNT_1_BIT;
 		gbuffer_position_description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		gbuffer_position_description.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		gbuffer_position_description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		gbuffer_position_description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		gbuffer_position_description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		gbuffer_position_description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -137,7 +137,7 @@ namespace Eagle
 		gbuffer_normal_description.format = m_framebuffer.attachments[1].format;
 		gbuffer_normal_description.samples = VK_SAMPLE_COUNT_1_BIT;
 		gbuffer_normal_description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		gbuffer_normal_description.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		gbuffer_normal_description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		gbuffer_normal_description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		gbuffer_normal_description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		gbuffer_normal_description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -147,7 +147,7 @@ namespace Eagle
 		gbuffer_base_color_description.format = m_framebuffer.attachments[2].format;
 		gbuffer_base_color_description.samples = VK_SAMPLE_COUNT_1_BIT;
 		gbuffer_base_color_description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		gbuffer_base_color_description.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		gbuffer_base_color_description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		gbuffer_base_color_description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		gbuffer_base_color_description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		gbuffer_base_color_description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -157,7 +157,7 @@ namespace Eagle
 		gbuffer_specular_description.format = m_framebuffer.attachments[3].format;
 		gbuffer_specular_description.samples = VK_SAMPLE_COUNT_1_BIT;
 		gbuffer_specular_description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		gbuffer_specular_description.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		gbuffer_specular_description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		gbuffer_specular_description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		gbuffer_specular_description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		gbuffer_specular_description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -167,7 +167,7 @@ namespace Eagle
 		depth_description.format = m_rhi->m_depth_image_format;
 		depth_description.samples = VK_SAMPLE_COUNT_1_BIT;
 		depth_description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depth_description.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depth_description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		depth_description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		depth_description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		depth_description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -397,16 +397,22 @@ namespace Eagle
 		depthStencil.depthBoundsTestEnable = VK_FALSE;
 		depthStencil.stencilTestEnable = VK_FALSE;
 
-		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		colorBlendAttachment.blendEnable = VK_FALSE;
+		VkPipelineColorBlendAttachmentState colorBlendAttachment[4];
+		colorBlendAttachment[0].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		colorBlendAttachment[0].blendEnable = VK_FALSE;
+		colorBlendAttachment[1].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		colorBlendAttachment[1].blendEnable = VK_FALSE;
+		colorBlendAttachment[2].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		colorBlendAttachment[2].blendEnable = VK_FALSE;
+		colorBlendAttachment[3].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		colorBlendAttachment[3].blendEnable = VK_FALSE;
 
 		VkPipelineColorBlendStateCreateInfo colorBlending{};
 		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 		colorBlending.logicOpEnable = VK_FALSE;
 		colorBlending.logicOp = VK_LOGIC_OP_COPY;
-		colorBlending.attachmentCount = 1;
-		colorBlending.pAttachments = &colorBlendAttachment;
+		colorBlending.attachmentCount = 4;
+		colorBlending.pAttachments = &colorBlendAttachment[0];
 		colorBlending.blendConstants[0] = 0.0f;
 		colorBlending.blendConstants[1] = 0.0f;
 		colorBlending.blendConstants[2] = 0.0f;
@@ -572,7 +578,7 @@ namespace Eagle
 
 		setupAttachments();
 		setupRenderPass();
-		setupFramebuffers();
 		setupPipelines();
+		setupFramebuffers();
 	}
 }

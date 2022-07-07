@@ -7,9 +7,9 @@ namespace Eagle
 	void ShadingPass::initialize(ShadingPassInitInfo init_info)
 	{
 		VulkanPass::initialize({ init_info.rhi , init_info.render_resource });
-		m_gbuffer_ptr = std::shared_ptr<VulkanFramebuffer>(&init_info.gbuffer_pass_ptr->m_framebuffer);
+		m_gbuffer_ptr = &init_info.gbuffer_pass_ptr->m_framebuffer;
 
-		setupAttachments();
+		//setupAttachments();
 		setupRenderPass();
 		setupDescriptorSetLayout();
 		setupPipelines();
@@ -93,7 +93,8 @@ namespace Eagle
 		std::array<VkAttachmentDescription, 1> attachment;
 
 		VkAttachmentDescription& attachment_description = attachment[0];
-		attachment_description.format = m_framebuffer.attachments[0].format;
+		//attachment_description.format = m_framebuffer.attachments[0].format;
+		attachment_description.format = m_rhi->m_swapchain_image_format;
 		attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
 		attachment_description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachment_description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -527,5 +528,6 @@ namespace Eagle
 		setupRenderPass();
 		setupPipelines();
 		setupFramebuffers();
+		setupDescriptorSets();
 	}
 }

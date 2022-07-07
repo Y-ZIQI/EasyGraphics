@@ -33,7 +33,7 @@ namespace Eagle
 
 		void updateRecreateSwapChain();
 
-		std::shared_ptr<VulkanFramebuffer> m_gbuffer_ptr;
+		VulkanFramebuffer* m_gbuffer_ptr;
 
 		MeshPerFrameUBO	m_per_frame_ubo;
 	};
