@@ -58,6 +58,12 @@ namespace Eagle
             vertex[i].nz = source.vertex_buffer[i].normal.z;
             vertex[i].u = source.vertex_buffer[i].tex_coord.x;
             vertex[i].v = source.vertex_buffer[i].tex_coord.y;
+            vertex[i].tx = source.vertex_buffer[i].tangent.x;
+            vertex[i].ty = source.vertex_buffer[i].tangent.y;
+            vertex[i].tz = source.vertex_buffer[i].tangent.z;
+            vertex[i].btx = source.vertex_buffer[i].bitangent.x;
+            vertex[i].bty = source.vertex_buffer[i].bitangent.y;
+            vertex[i].btz = source.vertex_buffer[i].bitangent.z;
         }
 
         // index buffer

@@ -75,8 +75,8 @@ namespace Eagle
         float x, y, z;    // position
         float nx, ny, nz; // normal
         float u, v;       // UV coordinates
-
-        //float tx, ty, tz; // tangent
+        float tx, ty, tz; // tangent
+        float btx, bty, btz; // bitangent
     };
 
     typedef uint32_t MeshIndexDataDefinition;

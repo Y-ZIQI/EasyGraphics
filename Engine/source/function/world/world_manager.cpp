@@ -49,8 +49,8 @@ namespace Eagle
 		auto model_matrix = glm::rotate(glm::mat4(1.0f), 1.0f * time * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		// ---
 		for (auto& pair : m_current_scene->m_transforms) {
-			pair.second.transform = model_matrix;
-			pair.second.n_transform = glm::inverse(glm::transpose(glm::mat3(model_matrix)));
+			pair.second.transform = model_matrix;			
+			pair.second.n_transform = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
 		}
 	}
 }

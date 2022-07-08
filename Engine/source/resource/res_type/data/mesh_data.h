@@ -34,9 +34,11 @@ namespace Eagle
 		glm::vec3 pos;
 		glm::vec3 normal;
 		glm::vec2 tex_coord;
+		glm::vec3 tangent;
+		glm::vec3 bitangent;
 
 		bool operator==(const Vertex& other) const {
-			return pos == other.pos && normal == other.normal && tex_coord == other.tex_coord;
+			return pos == other.pos && normal == other.normal && tex_coord == other.tex_coord && tangent == other.tangent && bitangent == other.bitangent;
 		}
 	};
 

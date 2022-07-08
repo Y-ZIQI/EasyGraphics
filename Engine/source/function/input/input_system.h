@@ -23,13 +23,18 @@ namespace Eagle
 
 		void onKey(int key, int scancode, int action, int mods);
 		void onCursorPos(double current_cursor_x, double current_cursor_y);
+		void onMouseButton(int button, int action, int mods);
 
 		std::set<int> m_keys;
+		
+		bool m_mouse_left;
+		bool m_mouse_right;
+		bool m_mouse_middle;
 
-		int m_cursor_last_x;
-		int m_cursor_last_y;
-		int m_cursor_delta_x;
-		int m_cursor_delta_y;
+		float m_cursor_last_x;
+		float m_cursor_last_y;
+		float m_cursor_delta_x;
+		float m_cursor_delta_y;
 
 		std::shared_ptr<WindowSystem> m_window_system;
 	};

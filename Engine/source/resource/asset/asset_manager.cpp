@@ -54,6 +54,8 @@ namespace Eagle
 
                 // TODO: obj file normal
                 vertex.normal = { 1.0f, 1.0f, 1.0f };
+                vertex.tangent = { 1.0f, 1.0f, 1.0f };
+                vertex.bitangent = { 1.0f, 1.0f, 1.0f };
 
                 if (uniqueVertices.count(vertex) == 0) {
                     uniqueVertices[vertex] = v_idx++;
@@ -147,8 +149,8 @@ namespace Eagle
                     vertex.normal = glm::vec3(mesh->mNormals[j].x, mesh->mNormals[j].y, mesh->mNormals[j].z);
                 if (mesh->mTextureCoords[0]) {
                     vertex.tex_coord = glm::vec2(mesh->mTextureCoords[0][j].x, mesh->mTextureCoords[0][j].y);
-                    //vertex.Tangent = glm::vec3(mesh->mTangents[j].x, mesh->mTangents[j].y, mesh->mTangents[j].z);
-                    //vertex.Bitangent = glm::vec3(mesh->mBitangents[j].x, mesh->mBitangents[j].y, mesh->mBitangents[j].z);
+                    vertex.tangent = glm::vec3(mesh->mTangents[j].x, mesh->mTangents[j].y, mesh->mTangents[j].z);
+                    vertex.bitangent = glm::vec3(mesh->mBitangents[j].x, mesh->mBitangents[j].y, mesh->mBitangents[j].z);
                 }
                 else
                     vertex.tex_coord = glm::vec2(0.0f, 0.0f);
