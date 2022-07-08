@@ -52,7 +52,8 @@ namespace Eagle
                     attrib.texcoords[2 * index.texcoord_index + 1]
                 };
 
-                vertex.color = { 1.0f, 1.0f, 1.0f };
+                // TODO: obj file normal
+                vertex.normal = { 1.0f, 1.0f, 1.0f };
 
                 if (uniqueVertices.count(vertex) == 0) {
                     uniqueVertices[vertex] = v_idx++;
@@ -142,8 +143,8 @@ namespace Eagle
             for (uint32_t j = 0; j < vertices_i; j++) {
                 Vertex vertex;
                 vertex.pos = glm::vec3(mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z);
-                //if (mesh->HasNormals())
-                //    vertex.Normal = glm::vec3(mesh->mNormals[j].x, mesh->mNormals[j].y, mesh->mNormals[j].z);
+                if (mesh->HasNormals())
+                    vertex.normal = glm::vec3(mesh->mNormals[j].x, mesh->mNormals[j].y, mesh->mNormals[j].z);
                 if (mesh->mTextureCoords[0]) {
                     vertex.tex_coord = glm::vec2(mesh->mTextureCoords[0][j].x, mesh->mTextureCoords[0][j].y);
                     //vertex.Tangent = glm::vec3(mesh->mTangents[j].x, mesh->mTangents[j].y, mesh->mTangents[j].z);

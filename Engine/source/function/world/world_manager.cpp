@@ -14,9 +14,9 @@ namespace Eagle
 		asset_manager->loadScene(scene_path, m_current_scene);
 
 		Camera n_camera({
-			glm::vec3(2.0f, 2.0f, 2.0f),
-			glm::vec3(0.0f, 0.0f, 0.0f), 
-			glm::vec3(0.0f, 0.0f, 1.0f),
+			glm::vec3(0.0f, 0.5f, 1.0f),
+			glm::vec3(0.0f, 0.5f, 0.0f),
+			glm::vec3(0.0f, -1.0f, 0.0f),
 			//glm::vec2(glm::radians(45.0f), m_rhi->m_swapchain_extent.width / (float)m_rhi->m_swapchain_extent.height),
 			glm::vec2(glm::radians(45.0f), 1280 / (float)720),
 			0.1f, 10.0f
@@ -46,10 +46,11 @@ namespace Eagle
 		static auto startTime = std::chrono::high_resolution_clock::now();
 		auto currentTime = std::chrono::high_resolution_clock::now();
 		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-		auto model_matrix = glm::rotate(glm::mat4(1.0f), 1.0f * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		auto model_matrix = glm::rotate(glm::mat4(1.0f), 1.0f * time * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		// ---
 		for (auto& pair : m_current_scene->m_transforms) {
 			pair.second.transform = model_matrix;
+			pair.second.n_transform = glm::inverse(glm::transpose(glm::mat3(model_matrix)));
 		}
 	}
 }

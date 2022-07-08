@@ -20,15 +20,18 @@ namespace Eagle
 		if (recreate_swapchain) {
 			return true;
 		}
+
 		// GBuffer Pass
 		auto& m_scene = m_render_resource->m_current_scene;
 		m_gbuffer_pass->m_per_frame_ubo.proj_view_matrix = m_scene->m_cameras[0].getViewProj();
+		m_gbuffer_pass->m_per_frame_ubo.camera_pos = m_scene->m_cameras[0].m_data.m_position;
 		for (auto& pair : m_render_resource->m_current_scene->m_material_meshes) {
 			auto& mat_id = pair.first;
 			auto& mesh_set = pair.second;
 			for (auto& mesh_id : mesh_set) {
 				m_render_resource->m_render_nodes[mat_id][mesh_id] = {
 					m_render_resource->m_current_scene->m_transforms[mesh_id].transform,
+					m_render_resource->m_current_scene->m_transforms[mesh_id].n_transform,
 					mesh_id,
 					mat_id
 				};
@@ -38,6 +41,7 @@ namespace Eagle
 
 		// Shading Pass
 		m_shading_pass->m_per_frame_ubo.proj_view_matrix = m_scene->m_cameras[0].getViewProj();
+		m_shading_pass->m_per_frame_ubo.camera_pos = m_scene->m_cameras[0].m_data.m_position;
 		m_shading_pass->draw();
 		recreate_swapchain = m_rhi->postRendering();
 		return recreate_swapchain;

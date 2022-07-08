@@ -88,12 +88,6 @@
     <ClInclude Include="source\function\render\render_pipeline.h">
       <Filter>function\render</Filter>
     </ClInclude>
-    <ClInclude Include="source\function\render\render_pass.h">
-      <Filter>function\render</Filter>
-    </ClInclude>
-    <ClInclude Include="source\function\render\rhi\vulkan\vulkan_pipeline.h">
-      <Filter>function\render\rhi\vulkan</Filter>
-    </ClInclude>
     <ClInclude Include="source\resource\asset\asset_manager.h">
       <Filter>resource\asset</Filter>
     </ClInclude>
@@ -159,12 +153,6 @@
     </ClCompile>
     <ClCompile Include="source\function\render\render_pipeline.cpp">
       <Filter>function\render</Filter>
-    </ClCompile>
-    <ClCompile Include="source\function\render\render_pass.cpp">
-      <Filter>function\render</Filter>
-    </ClCompile>
-    <ClCompile Include="source\function\render\rhi\vulkan\vulkan_pipeline.cpp">
-      <Filter>function\render\rhi\vulkan</Filter>
     </ClCompile>
     <ClCompile Include="source\resource\asset\asset_manager.cpp">
       <Filter>resource\asset</Filter>

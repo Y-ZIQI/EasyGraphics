@@ -53,9 +53,9 @@ namespace Eagle
             vertex[i].x = source.vertex_buffer[i].pos.x;
             vertex[i].y = source.vertex_buffer[i].pos.y;
             vertex[i].z = source.vertex_buffer[i].pos.z;
-            vertex[i].r = source.vertex_buffer[i].color.r;
-            vertex[i].g = source.vertex_buffer[i].color.g;
-            vertex[i].b = source.vertex_buffer[i].color.b;
+            vertex[i].nx = source.vertex_buffer[i].normal.x;
+            vertex[i].ny = source.vertex_buffer[i].normal.y;
+            vertex[i].nz = source.vertex_buffer[i].normal.z;
             vertex[i].u = source.vertex_buffer[i].tex_coord.x;
             vertex[i].v = source.vertex_buffer[i].tex_coord.y;
         }

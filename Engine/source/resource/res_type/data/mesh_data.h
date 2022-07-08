@@ -13,11 +13,11 @@ namespace Eagle
 	{
 	public:
 		float x, y, z;
-		float r, g, b;
+		float nx, ny, nz;
 		float u, v;
 
 		bool operator==(const GVertex& other) const {
-			return x == other.x && y == other.y && z == other.z && r == other.r && g == other.g && b == other.b && u == other.u && v == other.v;
+			return x == other.x && y == other.y && z == other.z && nx == other.nx && ny == other.ny && nz == other.nz && u == other.u && v == other.v;
 		}
 	};
 
@@ -32,11 +32,11 @@ namespace Eagle
 	{
 	public:
 		glm::vec3 pos;
-		glm::vec3 color;
+		glm::vec3 normal;
 		glm::vec2 tex_coord;
 
 		bool operator==(const Vertex& other) const {
-			return pos == other.pos && color == other.color && tex_coord == other.tex_coord;
+			return pos == other.pos && normal == other.normal && tex_coord == other.tex_coord;
 		}
 	};
 

@@ -44,7 +44,7 @@ namespace Eagle
 namespace std {
 	template<> struct hash<Eagle::Vertex> {
 		size_t operator()(Eagle::Vertex const& vertex) const {
-			return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.tex_coord) << 1);
+			return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.normal) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.tex_coord) << 1);
 		}
 	};
 }

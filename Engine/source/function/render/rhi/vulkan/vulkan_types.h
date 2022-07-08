@@ -16,7 +16,7 @@ namespace Eagle
 
     struct VulkanVertex {
         glm::vec3 pos;
-        glm::vec3 color;
+        glm::vec3 normal;
         glm::vec2 texCoord;
 
         static VkVertexInputBindingDescription getBindingDescription() {
@@ -39,7 +39,7 @@ namespace Eagle
             attributeDescriptions[1].binding = 0;
             attributeDescriptions[1].location = 1;
             attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-            attributeDescriptions[1].offset = offsetof(VulkanVertex, color);
+            attributeDescriptions[1].offset = offsetof(VulkanVertex, normal);
 
             attributeDescriptions[2].binding = 0;
             attributeDescriptions[2].location = 2;
@@ -53,25 +53,23 @@ namespace Eagle
     struct MeshPerFrameUBO
     {
         alignas(16) glm::mat4 proj_view_matrix;
+        alignas(16) glm::vec3 camera_pos;
     };
 
     struct MeshPerDrawUBO
     {
         alignas(16) glm::mat4 model_matrix;
+        alignas(16) glm::mat3 normal_matrix;
     };
 
     struct MeshPerMaterialUBO
     {
         alignas(16) uint32_t flags = 0;
         alignas(16) glm::vec4 baseColorFactor{ 0.0f, 0.0f, 0.0f, 0.0f };
-
-        /*float metallicFactor = 0.0f;
-        float roughnessFactor = 0.0f;
-        float normalScale = 0.0f;
-        float occlusionStrength = 0.0f;
-
-        glm::vec3  emissiveFactor{ 0.0f, 0.0f, 0.0f };
-        uint32_t is_blend = 0;
+        alignas(16) glm::vec4 specularFactor{ 0.0f, 0.0f, 0.0f, 0.0f };
+        alignas(16) glm::vec4 normalFactor{ 0.0f, 0.0f, 0.0f, 0.0f };
+        alignas(16) glm::vec4 emissiveFactor{ 0.0f, 0.0f, 0.0f, 0.0f };
+        /*uint32_t is_blend = 0;
         uint32_t is_double_sided = 0;*/
     };
 
@@ -107,26 +105,6 @@ namespace Eagle
         VulkanTexture   normal_texture;
         VulkanTexture   emissive_texture;
 
-        //VkImage       base_color_texture_image = VK_NULL_HANDLE;
-        //VkImageView   base_color_image_view = VK_NULL_HANDLE;
-        //VmaAllocation base_color_image_allocation;
-
-        //VkImage       metallic_roughness_texture_image = VK_NULL_HANDLE;
-        //VkImageView   metallic_roughness_image_view = VK_NULL_HANDLE;
-        //VmaAllocation metallic_roughness_image_allocation;
-
-        //VkImage       normal_texture_image = VK_NULL_HANDLE;
-        //VkImageView   normal_image_view = VK_NULL_HANDLE;
-        //VmaAllocation normal_image_allocation;
-
-        //VkImage       occlusion_texture_image = VK_NULL_HANDLE;
-        //VkImageView   occlusion_image_view = VK_NULL_HANDLE;
-        //VmaAllocation occlusion_image_allocation;
-
-        //VkImage       emissive_texture_image = VK_NULL_HANDLE;
-        //VkImageView   emissive_image_view = VK_NULL_HANDLE;
-        //VmaAllocation emissive_image_allocation;
-
         VkBuffer        material_uniform_buffer;
         VkDeviceMemory  material_uniform_buffer_memory;
         void*           material_uniform_memory_pointer;
@@ -137,6 +115,7 @@ namespace Eagle
     struct VulkanMeshNode
     {
         glm::mat4   model_matrix;
+        glm::mat3   normal_matrix;
         uint32_t    mesh_id;
         uint32_t    material_id;
     };

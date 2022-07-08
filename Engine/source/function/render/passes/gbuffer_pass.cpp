@@ -55,6 +55,7 @@ namespace Eagle
 				VulkanMeshNode& render_node = node_pair.second;
 
 				m_per_draw_ubo.model_matrix = render_node.model_matrix;
+				m_per_draw_ubo.normal_matrix = render_node.normal_matrix;
 				memcpy(m_uniform_buffers[1][m_rhi->m_current_frame_index].memory_pointer, &m_per_draw_ubo, sizeof(m_per_draw_ubo));
 
 				m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 1, 1, &m_descriptors[1].descriptor_set, 0, nullptr);

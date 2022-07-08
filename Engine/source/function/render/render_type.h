@@ -73,10 +73,9 @@ namespace Eagle
     struct MeshVertexDataDefinition
     {
         float x, y, z;    // position
-        float r, g, b;    // color: may deleted
+        float nx, ny, nz; // normal
         float u, v;       // UV coordinates
 
-        //float nx, ny, nz; // normal
         //float tx, ty, tz; // tangent
     };
 

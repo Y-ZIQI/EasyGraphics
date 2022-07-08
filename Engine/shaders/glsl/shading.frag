@@ -3,6 +3,7 @@
 layout(set = 0, binding = 0) readonly buffer GlobalUniforms
 {
     mat4 proj_view;
+    vec3 camera_pos;
 }global_vars;
 
 layout(set = 1, binding = 0) uniform sampler2D positionTex;
@@ -23,5 +24,5 @@ void main() {
     vec4 specular = texture(specularTex, fragTexCoord);
     float depth = texture(depthTex, fragTexCoord).r;
     outColor = vec4(position.r, normal.g, baseColor.b, 1.0);
-    //outColor = vec4((position.rgb * 0.5) + 0.5, 1.0);
+    outColor = vec4(normal.rgb, 1.0);
 }

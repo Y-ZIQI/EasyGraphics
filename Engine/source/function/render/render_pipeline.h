@@ -25,7 +25,6 @@ namespace Eagle
 
 		std::shared_ptr<RHI> m_rhi;
 
-		//std::shared_ptr<RenderPass> m_main_pass;
 		std::shared_ptr<GBufferPass> m_gbuffer_pass;
 		std::shared_ptr<ShadingPass> m_shading_pass;
 
