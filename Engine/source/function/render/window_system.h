@@ -30,6 +30,7 @@ namespace Eagle
 		GLFWwindow* getWindow() const;
 		std::array<int, 2> getWindowSize() const;
 		bool getFocusMode() const { return m_is_focus_mode; }
+        float getDeltaTime() const { return m_delta_time; }
 		void setFocusMode(bool mode);
 		bool windowShouldClose();
 		void pollEvents();
@@ -193,6 +194,9 @@ namespace Eagle
 		std::string m_title;
 
 		bool m_is_focus_mode{ false };
+
+        float m_time{ 0.0f };
+        float m_delta_time{ 0.0f };
 
 		std::vector<onResetFunc>       m_onResetFunc;
 		std::vector<onKeyFunc>         m_onKeyFunc;

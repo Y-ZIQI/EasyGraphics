@@ -10,4 +10,9 @@ namespace Eagle
 		m_materials.clear();
 		m_material_meshes.clear();
 	}
+
+	Camera& Scene::getCamera()
+	{
+		return m_cameras[m_current_camera];
+	}
 }

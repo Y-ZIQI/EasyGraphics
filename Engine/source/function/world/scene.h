@@ -19,11 +19,14 @@ namespace Eagle
 		std::string m_directory;
 		bool m_texture_filp_vertically;
 
+		uint32_t m_current_camera;
 		std::vector<Camera> m_cameras;
 
 		std::map<uint32_t, Transform> m_transforms;
 		std::map<uint32_t, MeshData> m_meshes;
 		std::map<uint32_t, MaterialData> m_materials;
 		std::map<uint32_t, std::set<uint32_t>> m_material_meshes;
+
+		Camera& getCamera();
 	};
 }

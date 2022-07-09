@@ -58,5 +58,10 @@ namespace Eagle
 	void WindowSystem::pollEvents()
 	{
 		glfwPollEvents();
+
+		// Calculate time
+		float time = glfwGetTime();
+		m_delta_time = time - m_time;
+		m_time = time;
 	}
 }

@@ -17,25 +17,72 @@ namespace Eagle
 			std::placeholders::_1, 
 			std::placeholders::_2,
 			std::placeholders::_3));
+		m_world = init_info.world;
+
+		m_keys[GLFW_KEY_W] = false;
+		m_keys[GLFW_KEY_S] = false;
+		m_keys[GLFW_KEY_A] = false;
+		m_keys[GLFW_KEY_D] = false;
+		m_keys[GLFW_KEY_Q] = false;
+		m_keys[GLFW_KEY_E] = false;
 	}
 
-	void InputSystem::tick()
+	void InputSystem::tick(float delta_time)
 	{
+		if (m_mouse_left) {
+			float angularVelocity = 180.0f / glm::max(m_window_system->getWindowSize()[0], m_window_system->getWindowSize()[1]);
+			Camera& camera = m_world->m_current_scene->getCamera();
+			camera.rotate(-m_cursor_delta_x * angularVelocity, -m_cursor_delta_y * angularVelocity);
+			camera.update();
+			m_cursor_delta_x = 0.0f;
+			m_cursor_delta_y = 0.0f;
+		}
+		if (m_keys[GLFW_KEY_W]) {
+			Camera& camera = m_world->m_current_scene->getCamera();
+			glm::vec3 forward = delta_time * camera.m_front;
+			camera.move(forward);
+		}
+		if (m_keys[GLFW_KEY_S]) {
+			Camera& camera = m_world->m_current_scene->getCamera();
+			glm::vec3 forward = -delta_time * camera.m_front;
+			camera.move(forward);
+		}
+		if (m_keys[GLFW_KEY_A]) {
+			Camera& camera = m_world->m_current_scene->getCamera();
+			glm::vec3 forward = -delta_time * camera.m_right;
+			camera.move(forward);
+		}
+		if (m_keys[GLFW_KEY_D]) {
+			Camera& camera = m_world->m_current_scene->getCamera();
+			glm::vec3 forward = delta_time * camera.m_right;
+			camera.move(forward);
+		}
+		if (m_keys[GLFW_KEY_Q]) {
+			Camera& camera = m_world->m_current_scene->getCamera();
+			glm::vec3 forward = -delta_time * WorldUp;
+			camera.move(forward);
+		}
+		if (m_keys[GLFW_KEY_E]) {
+			Camera& camera = m_world->m_current_scene->getCamera();
+			glm::vec3 forward = delta_time * WorldUp;
+			camera.move(forward);
+		}
 	}
 
 	void InputSystem::cleanup()
 	{
+		m_keys.clear();
 	}
 
 	void InputSystem::onKey(int key, int scancode, int action, int mods)
 	{
 		if (action == GLFW_PRESS)
 		{
-			m_keys.insert(key);
+			m_keys[key] = true;
 		}
 		else if (action == GLFW_RELEASE)
 		{
-			m_keys.erase(key);
+			m_keys[key] = false;
 		}
 	}
 
