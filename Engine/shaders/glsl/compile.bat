@@ -9,3 +9,6 @@ call %glslc% draw_gbuffer.frag -o ../compiled/draw_gbuffer_frag.spv
 
 call %glslc% shading.vert -o ../compiled/shading_vert.spv
 call %glslc% shading.frag -o ../compiled/shading_frag.spv
+
+call %glslc% tonemapping.vert -o ../compiled/tonemapping_vert.spv
+call %glslc% tonemapping.frag -o ../compiled/tonemapping_frag.spv

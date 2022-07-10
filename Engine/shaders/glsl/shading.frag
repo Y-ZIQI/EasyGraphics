@@ -1,9 +1,12 @@
 #version 450
 
+#include "_lighting.glsl"
+
 layout(set = 0, binding = 0) uniform GlobalUniforms
 {
     mat4 proj_view;
     vec3 camera_pos;
+    DirectionalLight dir_light;
 }global_vars;
 
 layout(set = 1, binding = 0) uniform sampler2D positionTex;
@@ -17,14 +20,45 @@ layout(location = 1) in vec2 fragTexCoord;
 
 layout(location = 0) out vec4 outColor;
 
+vec3 shading(vec4 position, vec4 normal, vec4 baseColor, vec4 specular, float depth){
+    ShadingData sd;
+    sd.pos = position.xyz;
+    sd.V = normalize(global_vars.camera_pos - sd.pos);
+    sd.N = normalize(normal.xyz);
+    sd.R = reflect(-sd.V, sd.N);
+    sd.NdotV = max(dot(sd.V, sd.N), 0.0);
+    sd.depth = depth;
+    sd.baseColor = baseColor.rgb;
+    sd.ao = 1.0 - specular.r;
+    sd.roughness = specular.g;
+    sd.metallic = specular.b;
+    
+    float IoR = 1.5;
+    float f = (IoR - 1.0) / (IoR + 1.0);
+    vec3 F0 = vec3(f * f);
+    sd.diffuse = mix(sd.baseColor, vec3(0), sd.metallic);
+    sd.specular = mix(F0, sd.baseColor, sd.metallic);
+    sd.ggxAlpha = max(0.0064, sd.roughness * sd.roughness);
+
+    vec3 F = F_Schlick(sd.specular, vec3(1.0), sd.NdotV);
+    sd.kD = (vec3(1.0) - F) * (1.0 - sd.metallic);
+    sd.kS = 1.0 - sd.kD;
+
+    vec3 color = vec3(0.0);
+    color += evalDirectionalLight(sd, global_vars.dir_light);
+    return color;
+}
+
 void main() {
     vec4 position = texture(positionTex, fragTexCoord);
     vec4 normal = texture(normalTex, fragTexCoord);
     vec4 baseColor = texture(baseColorTex, fragTexCoord);
     vec4 specular = texture(specularTex, fragTexCoord);
     float depth = texture(depthTex, fragTexCoord).r;
-    outColor = vec4(position.r, normal.g, baseColor.b, 1.0);
 
-    vec3 d = global_vars.camera_pos - position.xyz;    
-    outColor = vec4(d, 1.0);
+    vec3 color = shading(position, normal, baseColor, specular, depth);
+    outColor = vec4(color, 1.0);
+
+    // vec3 d = global_vars.camera_pos - position.xyz;    
+    // outColor = vec4(d, 1.0);
 }

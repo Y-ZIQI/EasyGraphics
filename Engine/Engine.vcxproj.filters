@@ -124,6 +124,9 @@
     <ClInclude Include="source\function\render\rhi\vulkan\vulkan_pass.h">
       <Filter>function\render\rhi\vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="source\function\render\passes\postprocess_pass.h">
+      <Filter>function\render\passes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\engine.cpp" />
@@ -180,6 +183,9 @@
     </ClCompile>
     <ClCompile Include="source\function\render\rhi\vulkan\vulkan_pass.cpp">
       <Filter>function\render\rhi\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\render\passes\postprocess_pass.cpp">
+      <Filter>function\render\passes</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

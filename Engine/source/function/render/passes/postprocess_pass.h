@@ -4,21 +4,19 @@
 
 namespace Eagle
 {
-	struct ShadingPassInitInfo
+	struct PostprocessPassInitInfo
 	{
 		std::shared_ptr<VulkanRHI> rhi;
-		std::shared_ptr<VulkanRenderResource> render_resource;
-
-		std::shared_ptr<VulkanPass> gbuffer_pass_ptr;
+		std::shared_ptr<VulkanPass> shading_pass_ptr;
 	};
 
-	class ShadingPass : public VulkanPass
+	class PostprocessPass : public VulkanPass
 	{
 	public:
-		ShadingPass() {};
-		~ShadingPass() {};
+		PostprocessPass() {};
+		~PostprocessPass() {};
 
-		void initialize(ShadingPassInitInfo init_info);
+		void initialize(PostprocessPassInitInfo init_info);
 		void draw();
 		void cleanupSwapChain();
 		void cleanup();
@@ -33,9 +31,7 @@ namespace Eagle
 
 		void updateRecreateSwapChain();
 
-		VulkanFramebuffer* m_gbuffer_ptr;
-
-		ShadingPerFrameUBO	m_per_frame_ubo;
+		VulkanFramebuffer* m_color_buffer_ptr;
 	};
 
 }

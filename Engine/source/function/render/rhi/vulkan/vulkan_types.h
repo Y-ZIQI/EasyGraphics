@@ -57,6 +57,8 @@ namespace Eagle
         }
     };
 
+    // Vulkan UBO
+
     struct MeshPerFrameUBO
     {
         alignas(16) glm::mat4 proj_view_matrix;
@@ -71,14 +73,29 @@ namespace Eagle
 
     struct MeshPerMaterialUBO
     {
-        alignas(16) uint32_t flags = 0;
-        alignas(16) glm::vec4 baseColorFactor{ 0.0f, 0.0f, 0.0f, 0.0f };
-        alignas(16) glm::vec4 specularFactor{ 0.0f, 0.0f, 0.0f, 0.0f };
+        alignas(4) uint32_t flags = 0;
+        alignas(16) glm::vec4 baseColorFactor{ 1.0f, 1.0f, 1.0f, 0.0f };
+        alignas(16) glm::vec4 specularFactor{ 0.0f, 1.0f, 0.0f, 0.0f };
         alignas(16) glm::vec4 normalFactor{ 0.0f, 0.0f, 0.0f, 0.0f };
         alignas(16) glm::vec4 emissiveFactor{ 0.0f, 0.0f, 0.0f, 0.0f };
         /*uint32_t is_blend = 0;
         uint32_t is_double_sided = 0;*/
     };
+
+    struct DirectionalLightUBO
+    {
+        alignas(16) glm::vec4 intensity{ 1.0f, 1.0f, 0.0f, 0.0f };
+        alignas(16) glm::vec4 direction{ 2.0f, -2.0f, -1.0f, 0.0f };
+    };
+
+    struct ShadingPerFrameUBO
+    {
+        alignas(16) glm::mat4 proj_view_matrix;
+        alignas(16) glm::vec3 camera_pos;
+        DirectionalLightUBO dir_light;
+    };
+
+    // Vulkan resource
 
     struct VulkanMesh
     {
@@ -92,8 +109,6 @@ namespace Eagle
         VkBuffer mesh_index_buffer;
         VkDeviceMemory mesh_index_buffer_memory;
     };
-
-    // material
 
     struct VulkanTexture
     {

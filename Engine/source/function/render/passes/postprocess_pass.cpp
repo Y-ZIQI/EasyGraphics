@@ -1,13 +1,13 @@
 #include "function/global/global_resource.h"
 
-#include "function/render/passes/shading_pass.h"
+#include "function/render/passes/postprocess_pass.h"
 
 namespace Eagle
 {
-	void ShadingPass::initialize(ShadingPassInitInfo init_info)
+	void PostprocessPass::initialize(PostprocessPassInitInfo init_info)
 	{
-		VulkanPass::initialize({ init_info.rhi , init_info.render_resource });
-		m_gbuffer_ptr = &init_info.gbuffer_pass_ptr->m_framebuffer;
+		VulkanPass::initialize({ init_info.rhi , nullptr });
+		m_color_buffer_ptr = &init_info.shading_pass_ptr->m_framebuffer;
 
 		//setupAttachments();
 		setupRenderPass();
@@ -18,7 +18,7 @@ namespace Eagle
 		setupDescriptorSets();
 	}
 
-	void ShadingPass::draw()
+	void PostprocessPass::draw()
 	{
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -36,27 +36,21 @@ namespace Eagle
 
 		m_rhi->m_vk_cmd_begin_render_pass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		m_rhi->m_vk_cmd_bind_pipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].pipeline);
-
-		memcpy(m_uniform_buffers[0][m_rhi->m_current_frame_index].memory_pointer, &m_per_frame_ubo, sizeof(m_per_frame_ubo));
-
-		std::array<VkDescriptorSet, 2> bind_descriptor_sets = { m_descriptors[0].descriptor_set, m_descriptors[1].descriptor_set };
-		m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 0, 2, bind_descriptor_sets.data(), 0, nullptr);
-
 		m_rhi->m_vk_cmd_draw(commandBuffer, 3, 1, 0, 0);
 		m_rhi->m_vk_cmd_end_render_pass(commandBuffer);
 	}
 
-	void ShadingPass::cleanupSwapChain()
+	void PostprocessPass::cleanupSwapChain()
 	{
 		VulkanPass::cleanupSwapChain();
 	}
 
-	void ShadingPass::cleanup()
+	void PostprocessPass::cleanup()
 	{
 		VulkanPass::cleanup();
 	}
 
-	void ShadingPass::setupAttachments()
+	void PostprocessPass::setupAttachments()
 	{
 		m_framebuffer.width = m_rhi->m_swapchain_extent.width;
 		m_framebuffer.height = m_rhi->m_swapchain_extent.height;
@@ -88,12 +82,11 @@ namespace Eagle
 			1);
 	}
 
-	void ShadingPass::setupRenderPass()
+	void PostprocessPass::setupRenderPass()
 	{
 		std::array<VkAttachmentDescription, 1> attachment;
 
 		VkAttachmentDescription& attachment_description = attachment[0];
-		//attachment_description.format = m_framebuffer.attachments[0].format;
 		attachment_description.format = m_rhi->m_swapchain_image_format;
 		attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
 		attachment_description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -134,32 +127,12 @@ namespace Eagle
 		}
 	}
 
-	void ShadingPass::setupDescriptorSetLayout()
+	void PostprocessPass::setupDescriptorSetLayout()
 	{
-		m_descriptors.resize(2);
+		m_descriptors.resize(1);
 
 		{
-			// Global uniforms
-			VkDescriptorSetLayoutBinding uboLayoutBinding{};
-			uboLayoutBinding.binding = 0;
-			uboLayoutBinding.descriptorCount = 1;
-			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			uboLayoutBinding.pImmutableSamplers = nullptr;
-			uboLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-			VkDescriptorSetLayoutCreateInfo layoutInfo{};
-			std::array<VkDescriptorSetLayoutBinding, 1> bindings = { uboLayoutBinding };
-			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-			layoutInfo.pBindings = bindings.data();
-
-			if (vkCreateDescriptorSetLayout(m_rhi->m_device, &layoutInfo, nullptr, &m_descriptors[0].layout) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create descriptor set layout!");
-			}
-		}
-
-		{
-			std::array<VkDescriptorSetLayoutBinding, 5> layoutBinding;
+			std::array<VkDescriptorSetLayoutBinding, 1> layoutBinding;
 
 			layoutBinding[0].binding = 0;
 			layoutBinding[0].descriptorCount = 1;
@@ -167,48 +140,24 @@ namespace Eagle
 			layoutBinding[0].pImmutableSamplers = nullptr;
 			layoutBinding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-			layoutBinding[1].binding = 1;
-			layoutBinding[1].descriptorCount = 1;
-			layoutBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			layoutBinding[1].pImmutableSamplers = nullptr;
-			layoutBinding[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-			layoutBinding[2].binding = 2;
-			layoutBinding[2].descriptorCount = 1;
-			layoutBinding[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			layoutBinding[2].pImmutableSamplers = nullptr;
-			layoutBinding[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-			layoutBinding[3].binding = 3;
-			layoutBinding[3].descriptorCount = 1;
-			layoutBinding[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			layoutBinding[3].pImmutableSamplers = nullptr;
-			layoutBinding[3].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-			layoutBinding[4].binding = 4;
-			layoutBinding[4].descriptorCount = 1;
-			layoutBinding[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			layoutBinding[4].pImmutableSamplers = nullptr;
-			layoutBinding[4].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
 			VkDescriptorSetLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 			layoutInfo.bindingCount = layoutBinding.size();
 			layoutInfo.pBindings = layoutBinding.data();
 
-			if (vkCreateDescriptorSetLayout(m_rhi->m_device, &layoutInfo, nullptr, &m_descriptors[1].layout) != VK_SUCCESS) {
+			if (vkCreateDescriptorSetLayout(m_rhi->m_device, &layoutInfo, nullptr, &m_descriptors[0].layout) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create descriptor set layout!");
 			}
 		}
 	}
 
-	void ShadingPass::setupPipelines()
+	void PostprocessPass::setupPipelines()
 	{
 		m_render_pipelines.resize(1);
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		std::vector<VkDescriptorSetLayout> layouts = { m_descriptors[0].layout, m_descriptors[1].layout };
+		std::vector<VkDescriptorSetLayout> layouts = { m_descriptors[0].layout };
 		pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(layouts.size());
 		pipelineLayoutInfo.pSetLayouts = layouts.data();
 
@@ -216,8 +165,8 @@ namespace Eagle
 			throw std::runtime_error("failed to create pipeline layout!");
 		}
 
-		auto vertShaderCode = FileSystem::readFile(g_global_resource.m_shaders->shading_vert_path);
-		auto fragShaderCode = FileSystem::readFile(g_global_resource.m_shaders->shading_frag_path);
+		auto vertShaderCode = FileSystem::readFile(g_global_resource.m_shaders->tonemapping_vert_path);
+		auto fragShaderCode = FileSystem::readFile(g_global_resource.m_shaders->tonemapping_frag_path);
 
 		VkShaderModule vertShaderModule = VulkanUtil::createShaderModule(m_rhi->m_device, vertShaderCode);
 		VkShaderModule fragShaderModule = VulkanUtil::createShaderModule(m_rhi->m_device, fragShaderCode);
@@ -275,7 +224,6 @@ namespace Eagle
 		rasterizer.lineWidth = 1.0f;
 		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		//rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 		rasterizer.depthBiasEnable = VK_FALSE;
 
 		VkPipelineMultisampleStateCreateInfo multisampling{};
@@ -330,7 +278,7 @@ namespace Eagle
 		vkDestroyShaderModule(m_rhi->m_device, vertShaderModule, nullptr);
 	}
 
-	void ShadingPass::setupFramebuffers()
+	void PostprocessPass::setupFramebuffers()
 	{
 		m_rhi->m_swapchain_framebuffers.resize(m_rhi->m_swapchain_imageviews.size());
 
@@ -354,31 +302,11 @@ namespace Eagle
 		}
 	}
 
-	void ShadingPass::setupUniformBuffers()
+	void PostprocessPass::setupUniformBuffers()
 	{
-		m_uniform_buffers.resize(1);
-
-		{
-			VkDeviceSize bufferSize = sizeof(ShadingPerFrameUBO);
-
-			m_uniform_buffers[0].resize(m_rhi->m_max_frames_in_flight);
-
-			for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
-				VulkanUtil::createBuffer(
-					m_rhi->m_physical_device,
-					m_rhi->m_device,
-					bufferSize,
-					VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					m_uniform_buffers[0][i].uniform_buffers,
-					m_uniform_buffers[0][i].uniform_buffers_memory
-				);
-				vkMapMemory(m_rhi->m_device, m_uniform_buffers[0][i].uniform_buffers_memory, 0, sizeof(ShadingPerFrameUBO), 0, &m_uniform_buffers[0][i].memory_pointer);
-			}
-		}
 	}
 
-	void ShadingPass::setupDescriptorSets()
+	void PostprocessPass::setupDescriptorSets()
 	{
 		{
 			VkDescriptorSetAllocateInfo allocInfo{};
@@ -391,118 +319,28 @@ namespace Eagle
 				throw std::runtime_error("failed to allocate descriptor sets!");
 			}
 
-			for (size_t i = 0; i < m_rhi->m_max_frames_in_flight; i++) {
-				VkDescriptorBufferInfo bufferInfo{};
-				bufferInfo.buffer = m_uniform_buffers[0][i].uniform_buffers;
-				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(ShadingPerFrameUBO);
+			VkDescriptorImageInfo color_buffer_info = {};
+			color_buffer_info.sampler = VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
+			color_buffer_info.imageView = m_color_buffer_ptr->attachments[0].view;
+			color_buffer_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-				VkWriteDescriptorSet descriptorWrites{};
-				descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrites.dstSet = m_descriptors[0].descriptor_set;
-				descriptorWrites.dstBinding = 0;
-				descriptorWrites.dstArrayElement = 0;
-				descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				descriptorWrites.descriptorCount = 1;
-				descriptorWrites.pBufferInfo = &bufferInfo;
+			VkWriteDescriptorSet shading_write_info[1];
 
-				vkUpdateDescriptorSets(m_rhi->m_device, 1, &descriptorWrites, 0, nullptr);
-			}
-		}
+			VkWriteDescriptorSet& color_buffer_write_info = shading_write_info[0];
+			color_buffer_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			color_buffer_write_info.pNext = NULL;
+			color_buffer_write_info.dstSet = m_descriptors[0].descriptor_set;
+			color_buffer_write_info.dstBinding = 0;
+			color_buffer_write_info.dstArrayElement = 0;
+			color_buffer_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+			color_buffer_write_info.descriptorCount = 1;
+			color_buffer_write_info.pImageInfo = &color_buffer_info;
 
-		{
-			VkDescriptorSetAllocateInfo allocInfo{};
-			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			allocInfo.descriptorPool = m_rhi->m_descriptor_pool;
-			allocInfo.descriptorSetCount = 1;
-			allocInfo.pSetLayouts = &m_descriptors[1].layout;
-
-			if (vkAllocateDescriptorSets(m_rhi->m_device, &allocInfo, &m_descriptors[1].descriptor_set) != VK_SUCCESS) {
-				throw std::runtime_error("failed to allocate descriptor sets!");
-			}
-
-			VkDescriptorImageInfo gbuffer_position_info = {};
-			gbuffer_position_info.sampler = VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
-			gbuffer_position_info.imageView = m_gbuffer_ptr->attachments[0].view;
-			gbuffer_position_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-			VkDescriptorImageInfo gbuffer_normal_info = {};
-			gbuffer_normal_info.sampler = VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
-			gbuffer_normal_info.imageView = m_gbuffer_ptr->attachments[1].view;
-			gbuffer_normal_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-			VkDescriptorImageInfo gbuffer_base_color_info = {};
-			gbuffer_base_color_info.sampler = VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
-			gbuffer_base_color_info.imageView = m_gbuffer_ptr->attachments[2].view;
-			gbuffer_base_color_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-			VkDescriptorImageInfo gbuffer_specular_info = {};
-			gbuffer_specular_info.sampler = VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
-			gbuffer_specular_info.imageView = m_gbuffer_ptr->attachments[3].view;
-			gbuffer_specular_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-			VkDescriptorImageInfo depth_info = {};
-			depth_info.sampler = VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
-			depth_info.imageView = m_rhi->m_depth_image_view;
-			depth_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-			VkWriteDescriptorSet shading_write_info[5];
-
-			VkWriteDescriptorSet& gbuffer_position_write_info = shading_write_info[0];
-			gbuffer_position_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			gbuffer_position_write_info.pNext = NULL;
-			gbuffer_position_write_info.dstSet = m_descriptors[1].descriptor_set;
-			gbuffer_position_write_info.dstBinding = 0;
-			gbuffer_position_write_info.dstArrayElement = 0;
-			gbuffer_position_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-			gbuffer_position_write_info.descriptorCount = 1;
-			gbuffer_position_write_info.pImageInfo = &gbuffer_position_info;
-
-			VkWriteDescriptorSet& gbuffer_normal_write_info = shading_write_info[1];
-			gbuffer_normal_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			gbuffer_normal_write_info.pNext = NULL;
-			gbuffer_normal_write_info.dstSet = m_descriptors[1].descriptor_set;
-			gbuffer_normal_write_info.dstBinding = 1;
-			gbuffer_normal_write_info.dstArrayElement = 0;
-			gbuffer_normal_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-			gbuffer_normal_write_info.descriptorCount = 1;
-			gbuffer_normal_write_info.pImageInfo = &gbuffer_normal_info;
-
-			VkWriteDescriptorSet& gbuffer_base_color_write_info = shading_write_info[2];
-			gbuffer_base_color_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			gbuffer_base_color_write_info.pNext = NULL;
-			gbuffer_base_color_write_info.dstSet = m_descriptors[1].descriptor_set;
-			gbuffer_base_color_write_info.dstBinding = 2;
-			gbuffer_base_color_write_info.dstArrayElement = 0;
-			gbuffer_base_color_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-			gbuffer_base_color_write_info.descriptorCount = 1;
-			gbuffer_base_color_write_info.pImageInfo = &gbuffer_base_color_info;
-
-			VkWriteDescriptorSet& gbuffer_specular_write_info = shading_write_info[3];
-			gbuffer_specular_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			gbuffer_specular_write_info.pNext = NULL;
-			gbuffer_specular_write_info.dstSet = m_descriptors[1].descriptor_set;
-			gbuffer_specular_write_info.dstBinding = 3;
-			gbuffer_specular_write_info.dstArrayElement = 0;
-			gbuffer_specular_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-			gbuffer_specular_write_info.descriptorCount = 1;
-			gbuffer_specular_write_info.pImageInfo = &gbuffer_base_color_info;
-
-			VkWriteDescriptorSet& depth_write_info = shading_write_info[4];
-			depth_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			depth_write_info.pNext = NULL;
-			depth_write_info.dstSet = m_descriptors[1].descriptor_set;
-			depth_write_info.dstBinding = 4;
-			depth_write_info.dstArrayElement = 0;
-			depth_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-			depth_write_info.descriptorCount = 1;
-			depth_write_info.pImageInfo = &depth_info;
-
-			vkUpdateDescriptorSets(m_rhi->m_device, 5, shading_write_info, 0, nullptr);
+			vkUpdateDescriptorSets(m_rhi->m_device, 1, shading_write_info, 0, nullptr);
 		}
 	}
 
-	void ShadingPass::updateRecreateSwapChain()
+	void PostprocessPass::updateRecreateSwapChain()
 	{
 		cleanupSwapChain();
 

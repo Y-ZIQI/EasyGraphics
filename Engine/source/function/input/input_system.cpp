@@ -32,7 +32,7 @@ namespace Eagle
 		if (m_mouse_left) {
 			float angularVelocity = 180.0f / glm::max(m_window_system->getWindowSize()[0], m_window_system->getWindowSize()[1]);
 			Camera& camera = m_world->m_current_scene->getCamera();
-			camera.rotate(-m_cursor_delta_x * angularVelocity, -m_cursor_delta_y * angularVelocity);
+			camera.rotate(m_cursor_delta_x * angularVelocity, -m_cursor_delta_y * angularVelocity);
 			camera.update();
 			m_cursor_delta_x = 0.0f;
 			m_cursor_delta_y = 0.0f;
@@ -59,12 +59,12 @@ namespace Eagle
 		}
 		if (m_keys[GLFW_KEY_Q]) {
 			Camera& camera = m_world->m_current_scene->getCamera();
-			glm::vec3 forward = -delta_time * WorldUp;
+			glm::vec3 forward = delta_time * WorldUp;
 			camera.move(forward);
 		}
 		if (m_keys[GLFW_KEY_E]) {
 			Camera& camera = m_world->m_current_scene->getCamera();
-			glm::vec3 forward = delta_time * WorldUp;
+			glm::vec3 forward = -delta_time * WorldUp;
 			camera.move(forward);
 		}
 	}
