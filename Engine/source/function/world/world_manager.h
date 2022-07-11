@@ -13,6 +13,7 @@ namespace Eagle
 	{
 	public:
 		void loadScene(const std::string scene_path, std::shared_ptr<AssetManager> asset_manager);
+		void loadSceneJson(const std::string json_path, std::shared_ptr<AssetManager> asset_manager);
 		void loadObjSceneWithTexture(const std::string scene_path, const std::string texture_path, std::shared_ptr<AssetManager> asset_manager);
 
 		void tick();

@@ -24,6 +24,22 @@ namespace Eagle
 		m_current_scene->m_current_camera = 0;
 	}
 
+	void WorldManager::loadSceneJson(const std::string json_path, std::shared_ptr<AssetManager> asset_manager)
+	{
+		m_current_scene = std::make_shared<Scene>();
+		asset_manager->loadSceneJson(json_path, m_current_scene);
+
+		Camera n_camera({
+			glm::vec3(0.0f, 0.5f, 1.0f),
+			//glm::vec2(glm::radians(45.0f), m_rhi->m_swapchain_extent.width / (float)m_rhi->m_swapchain_extent.height),
+			glm::vec2(glm::radians(45.0f), 1280 / (float)720),
+			0.0f, 0.0f,
+			0.1f, 10.0f
+		});
+		m_current_scene->m_cameras.push_back(n_camera);
+		m_current_scene->m_current_camera = 0;
+	}
+
 	void WorldManager::loadObjSceneWithTexture(const std::string scene_path, const std::string texture_path, std::shared_ptr<AssetManager> asset_manager)
 	{
 		m_current_scene = std::make_shared<Scene>();

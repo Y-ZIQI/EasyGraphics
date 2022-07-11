@@ -13,6 +13,7 @@ namespace Eagle
     public:
         static std::vector<std::filesystem::path> getFiles(const std::filesystem::path& directory);
         static std::vector<char> readFile(const std::string& filename);
+        static std::string readFileToString(const std::string& filename);
     };
 
     class Path

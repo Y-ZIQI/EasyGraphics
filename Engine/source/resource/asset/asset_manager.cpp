@@ -1,5 +1,8 @@
 #include "resource/asset/asset_manager.h"
 
+#include "platform/file_system/file_system.h"
+
+#include <json11/json11.hpp>
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
@@ -188,5 +191,20 @@ namespace Eagle
         {
             processNode(node->mChildren[i], total_transform, n_scene);
         }
+    }
+
+    void AssetManager::loadSceneJson(const std::string& json_path, std::shared_ptr<Scene> n_scene){
+        std::string str = FileSystem::readFileToString(json_path);
+        str.push_back(0);
+
+        std::string err;
+        json11::Json json_obj = json11::Json::parse(str, err);
+
+        auto a = json_obj["models"];
+        auto b = a[0];
+        auto c = b["file"];
+        std::string scene_path = c.string_value();
+        scene_path = json_path.substr(0, json_path.find_last_of('/') + 1) + scene_path;
+        loadScene(scene_path, n_scene);
     }
 }

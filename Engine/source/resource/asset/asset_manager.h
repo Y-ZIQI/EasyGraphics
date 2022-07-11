@@ -33,6 +33,7 @@ namespace Eagle
 
 		void loadScene(const std::string& scene_path, const std::string& texture_path, std::shared_ptr<Scene> n_scene);
 		void loadScene(const std::string& scene_path, std::shared_ptr<Scene> n_scene);
+		void loadSceneJson(const std::string& json_path, std::shared_ptr<Scene> n_scene);
 
 	private:
 		void processNode(aiNode* node, glm::mat4 transform, std::shared_ptr<Scene> n_scene);
