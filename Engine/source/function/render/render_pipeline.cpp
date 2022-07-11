@@ -12,6 +12,9 @@ namespace Eagle
 
 		m_shading_pass = std::make_shared<ShadingPass>();
 		m_shading_pass->initialize({ init_info.rhi, init_info.render_resource, m_gbuffer_pass });
+
+		m_postprocess_pass = std::make_shared<PostprocessPass>();
+		m_postprocess_pass->initialize({ init_info.rhi, m_shading_pass });
 	}
 
 	bool RenderPipeline::render()
@@ -42,7 +45,13 @@ namespace Eagle
 		// Shading Pass
 		m_shading_pass->m_per_frame_ubo.proj_view_matrix = m_scene->m_cameras[0].getViewProj();
 		m_shading_pass->m_per_frame_ubo.camera_pos = m_scene->m_cameras[0].m_data.m_position;
+		m_shading_pass->m_per_frame_ubo.dir_light.intensity = { m_scene->m_dir_light.intensity, m_scene->m_dir_light.ambient };
+		m_shading_pass->m_per_frame_ubo.dir_light.direction = { m_scene->m_dir_light.direction, 0.0 };
 		m_shading_pass->draw();
+
+		// Post process Pass
+		m_postprocess_pass->draw();
+
 		recreate_swapchain = m_rhi->postRendering();
 		return recreate_swapchain;
 	}
@@ -51,6 +60,7 @@ namespace Eagle
 	{
 		m_gbuffer_pass->cleanup();
 		m_shading_pass->cleanup();
+		m_postprocess_pass->cleanup();
 	}
 
 	void RenderPipeline::recreateSwapChain()
@@ -58,5 +68,6 @@ namespace Eagle
 		m_rhi->recreateSwapChain();
 		m_gbuffer_pass->updateRecreateSwapChain();
 		m_shading_pass->updateRecreateSwapChain();
+		m_postprocess_pass->updateRecreateSwapChain();
 	}
 }

@@ -36,24 +36,17 @@ namespace Eagle
 
     std::string FileSystem::readFileToString(const std::string& filename)
     {
-        std::ifstream file(filename, std::ios::ate | std::ios::binary);
+        std::ifstream file(filename);
 
         if (!file.is_open()) {
             throw std::runtime_error("failed to open file!");
         }
 
-        size_t fileSize = (size_t)file.tellg();
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        std::string nstr(buffer.str());
 
-        char *buffer = new char[fileSize];
-
-        file.seekg(0);
-        file.read(buffer, fileSize);
-
-        file.close();
-
-        buffer[fileSize - 1] = 0;
-
-        return std::string(buffer);
+        return nstr;
     }
 
     const std::filesystem::path Path::getRelativePath(const std::filesystem::path& directory,

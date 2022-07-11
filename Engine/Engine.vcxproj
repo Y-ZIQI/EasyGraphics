@@ -186,6 +186,7 @@
     <ClInclude Include="source\platform\file_system\file_system.h" />
     <ClInclude Include="source\resource\asset\asset_manager.h" />
     <ClInclude Include="source\resource\res_type\data\camera.h" />
+    <ClInclude Include="source\resource\res_type\data\light_data.h" />
     <ClInclude Include="source\resource\res_type\data\material.h" />
     <ClInclude Include="source\resource\res_type\data\mesh_data.h" />
     <ClInclude Include="source\resource\shader\shader_manager.h" />

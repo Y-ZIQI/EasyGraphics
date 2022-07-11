@@ -3,6 +3,7 @@
 #include "resource/res_type/data/camera.h"
 #include "resource/res_type/data/mesh_data.h"
 #include "resource/res_type/data/material.h"
+#include "resource/res_type/data/light_data.h"
 
 #include <memory>
 #include <vector>
@@ -26,6 +27,8 @@ namespace Eagle
 		std::map<uint32_t, MeshData> m_meshes;
 		std::map<uint32_t, MaterialData> m_materials;
 		std::map<uint32_t, std::set<uint32_t>> m_material_meshes;
+
+		DirectionalLight m_dir_light;
 
 		Camera& getCamera();
 	};

@@ -9,6 +9,7 @@
 
 #include "function/render/passes/gbuffer_pass.h"
 #include "function/render/passes/shading_pass.h"
+#include "function/render/passes/postprocess_pass.h"
 
 namespace Eagle
 {

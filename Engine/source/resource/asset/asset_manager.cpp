@@ -195,16 +195,19 @@ namespace Eagle
 
     void AssetManager::loadSceneJson(const std::string& json_path, std::shared_ptr<Scene> n_scene){
         std::string str = FileSystem::readFileToString(json_path);
-        str.push_back(0);
 
         std::string err;
         json11::Json json_obj = json11::Json::parse(str, err);
 
-        auto a = json_obj["models"];
-        auto b = a[0];
-        auto c = b["file"];
-        std::string scene_path = c.string_value();
+        std::string scene_path = json_obj["models"][0]["file"].string_value();
         scene_path = json_path.substr(0, json_path.find_last_of('/') + 1) + scene_path;
         loadScene(scene_path, n_scene);
+
+        auto& dir_light = json_obj["lights"][0];
+        auto it = dir_light["intensity"].array_items();
+        n_scene->m_dir_light.intensity = { it[0].number_value(), it[1].number_value(), it[2].number_value() };
+        auto dir = dir_light["direction"].array_items();
+        n_scene->m_dir_light.direction = { dir[0].number_value(), dir[1].number_value(), dir[2].number_value() };
+        n_scene->m_dir_light.ambient = dir_light["ambient"].number_value();
     }
 }

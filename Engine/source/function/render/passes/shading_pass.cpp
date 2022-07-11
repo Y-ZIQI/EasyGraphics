@@ -9,7 +9,7 @@ namespace Eagle
 		VulkanPass::initialize({ init_info.rhi , init_info.render_resource });
 		m_gbuffer_ptr = &init_info.gbuffer_pass_ptr->m_framebuffer;
 
-		//setupAttachments();
+		setupAttachments();
 		setupRenderPass();
 		setupDescriptorSetLayout();
 		setupPipelines();
@@ -23,7 +23,8 @@ namespace Eagle
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.renderPass = m_render_pass;
-		renderPassInfo.framebuffer = m_rhi->m_swapchain_framebuffers[m_rhi->m_current_swapchain_image_index];
+		//renderPassInfo.framebuffer = m_rhi->m_swapchain_framebuffers[m_rhi->m_current_swapchain_image_index];
+		renderPassInfo.framebuffer = m_framebuffer.framebuffer;
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = m_rhi->m_swapchain_extent;
 
@@ -93,15 +94,14 @@ namespace Eagle
 		std::array<VkAttachmentDescription, 1> attachment;
 
 		VkAttachmentDescription& attachment_description = attachment[0];
-		//attachment_description.format = m_framebuffer.attachments[0].format;
-		attachment_description.format = m_rhi->m_swapchain_image_format;
+		attachment_description.format = m_framebuffer.attachments[0].format;
 		attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
 		attachment_description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachment_description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		attachment_description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachment_description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachment_description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachment_description.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		attachment_description.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		VkAttachmentReference colorAttachmentRef;
 		colorAttachmentRef.attachment = 0;
@@ -332,25 +332,21 @@ namespace Eagle
 
 	void ShadingPass::setupFramebuffers()
 	{
-		m_rhi->m_swapchain_framebuffers.resize(m_rhi->m_swapchain_imageviews.size());
+		std::array<VkImageView, 1> attachments = {
+			m_framebuffer.attachments[0].view
+		};
 
-		for (size_t i = 0; i < m_rhi->m_swapchain_imageviews.size(); i++) {
-			std::array<VkImageView, 1> attachments = {
-				m_rhi->m_swapchain_imageviews[i]
-			};
+		VkFramebufferCreateInfo framebufferInfo{};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = m_render_pass;
+		framebufferInfo.attachmentCount = attachments.size();
+		framebufferInfo.pAttachments = attachments.data();
+		framebufferInfo.width = m_rhi->m_swapchain_extent.width;
+		framebufferInfo.height = m_rhi->m_swapchain_extent.height;
+		framebufferInfo.layers = 1;
 
-			VkFramebufferCreateInfo framebufferInfo{};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = m_render_pass;
-			framebufferInfo.attachmentCount = attachments.size();
-			framebufferInfo.pAttachments = attachments.data();
-			framebufferInfo.width = m_rhi->m_swapchain_extent.width;
-			framebufferInfo.height = m_rhi->m_swapchain_extent.height;
-			framebufferInfo.layers = 1;
-
-			if (vkCreateFramebuffer(m_rhi->m_device, &framebufferInfo, nullptr, &m_rhi->m_swapchain_framebuffers[i]) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create framebuffer!");
-			}
+		if (vkCreateFramebuffer(m_rhi->m_device, &framebufferInfo, nullptr, &m_framebuffer.framebuffer) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create framebuffer!");
 		}
 	}
 
@@ -506,6 +502,7 @@ namespace Eagle
 	{
 		cleanupSwapChain();
 
+		setupAttachments();
 		setupRenderPass();
 		setupPipelines();
 		setupFramebuffers();

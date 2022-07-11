@@ -32,7 +32,7 @@ namespace Eagle
 		Camera n_camera({
 			glm::vec3(0.0f, 0.5f, 1.0f),
 			//glm::vec2(glm::radians(45.0f), m_rhi->m_swapchain_extent.width / (float)m_rhi->m_swapchain_extent.height),
-			glm::vec2(glm::radians(45.0f), 1280 / (float)720),
+			glm::vec2(glm::radians(60.0f), 1280 / (float)720),
 			0.0f, 0.0f,
 			0.1f, 10.0f
 		});

@@ -127,6 +127,9 @@
     <ClInclude Include="source\function\render\passes\postprocess_pass.h">
       <Filter>function\render\passes</Filter>
     </ClInclude>
+    <ClInclude Include="source\resource\res_type\data\light_data.h">
+      <Filter>resource\res_type\data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\engine.cpp" />

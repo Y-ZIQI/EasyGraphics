@@ -36,6 +36,7 @@ namespace Eagle
 
 		m_rhi->m_vk_cmd_begin_render_pass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		m_rhi->m_vk_cmd_bind_pipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].pipeline);
+		m_rhi->m_vk_cmd_bind_descriptor_sets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].layout, 0, 1, &m_descriptors[0].descriptor_set, 0, nullptr);
 		m_rhi->m_vk_cmd_draw(commandBuffer, 3, 1, 0, 0);
 		m_rhi->m_vk_cmd_end_render_pass(commandBuffer);
 	}
@@ -344,6 +345,7 @@ namespace Eagle
 	{
 		cleanupSwapChain();
 
+		//setupAttachments();
 		setupRenderPass();
 		setupPipelines();
 		setupFramebuffers();

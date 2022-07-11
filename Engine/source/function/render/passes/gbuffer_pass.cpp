@@ -10,9 +10,9 @@ namespace Eagle
 
 		setupAttachments();
 		setupRenderPass();
-		setupFramebuffers();
 		setupDescriptorSetLayout();
 		setupPipelines();
+		setupFramebuffers();
 		setupUniformBuffers();
 		setupDescriptorSets();
 	}
