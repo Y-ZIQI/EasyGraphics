@@ -8,6 +8,7 @@ layout(set = 0, binding = 0) uniform GlobalUniforms
     vec3 camera_pos;
     DirectionalLight dir_light;
 }global_vars;
+layout(set = 0, binding = 1) uniform sampler2D dirlightShadowMap;
 
 layout(set = 1, binding = 0) uniform sampler2D positionTex;
 layout(set = 1, binding = 1) uniform sampler2D normalTex;
@@ -59,6 +60,8 @@ void main() {
     vec3 color = shading(position, normal, baseColor, specular, depth);
     outColor = vec4(color, 1.0);
 
+    // float d = texture(dirlightShadowMap, fragTexCoord).r;
+    // outColor = vec4(d,d,d,1.0);
     // vec3 d = global_vars.camera_pos - position.xyz;    
     // outColor = vec4(d, 1.0);
 }

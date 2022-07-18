@@ -12,3 +12,6 @@ call %glslc% shading.frag -o ../compiled/shading_frag.spv
 
 call %glslc% tonemapping.vert -o ../compiled/tonemapping_vert.spv
 call %glslc% tonemapping.frag -o ../compiled/tonemapping_frag.spv
+
+call %glslc% shadow.vert -o ../compiled/shadow_vert.spv
+call %glslc% shadow.frag -o ../compiled/shadow_frag.spv

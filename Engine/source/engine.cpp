@@ -14,8 +14,8 @@ namespace Eagle
 			g_global_context.m_window_system->pollEvents();
 
 			float delta_time = g_global_context.m_window_system->getDeltaTime();
-			g_global_context.m_world_manager->tick();
 			g_global_context.m_input_system->tick(delta_time);
+			g_global_context.m_world_manager->tick();
 			g_global_context.m_render_system->tick();
 		}
 	}

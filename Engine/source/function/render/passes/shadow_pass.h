@@ -4,22 +4,20 @@
 
 namespace Eagle
 {
-	struct ShadingPassInitInfo
+	struct ShadowPassInitInfo
 	{
 		std::shared_ptr<VulkanRHI> rhi;
 		std::shared_ptr<VulkanRenderResource> render_resource;
-
-		std::shared_ptr<VulkanPass> shadow_pass_ptr;
-		std::shared_ptr<VulkanPass> gbuffer_pass_ptr;
+		glm::uvec2 resolution;
 	};
 
-	class ShadingPass : public VulkanPass
+	class ShadowPass : public VulkanPass
 	{
 	public:
-		ShadingPass() {};
-		~ShadingPass() {};
+		ShadowPass() {};
+		~ShadowPass() {};
 
-		void initialize(ShadingPassInitInfo init_info);
+		void initialize(ShadowPassInitInfo init_info);
 		void draw();
 		void cleanupSwapChain();
 		void cleanup();
@@ -32,12 +30,12 @@ namespace Eagle
 		void setupUniformBuffers();
 		void setupDescriptorSets();
 
-		void updateRecreateSwapChain();
+		void recreateShadpwMap();
 
-		VulkanFramebuffer* m_shadow_map_ptr;
-		VulkanFramebuffer* m_gbuffer_ptr;
+		glm::uvec2 m_resolution{ 512, 512 };
 
-		ShadingPerFrameUBO	m_per_frame_ubo;
+		ShadowPerFrameUBO	m_per_frame_ubo;
+		ShadowPerDrawUBO	m_per_draw_ubo;
 	};
 
 }

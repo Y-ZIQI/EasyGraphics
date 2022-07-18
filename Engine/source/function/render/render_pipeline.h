@@ -25,6 +25,8 @@ namespace Eagle
 
 		std::shared_ptr<RHI> m_rhi;
 
+		std::shared_ptr<ShadowPass> m_directional_shadow_pass;
+
 		std::shared_ptr<GBufferPass> m_gbuffer_pass;
 		std::shared_ptr<ShadingPass> m_shading_pass;
 		std::shared_ptr<PostprocessPass> m_postprocess_pass;

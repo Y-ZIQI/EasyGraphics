@@ -95,6 +95,16 @@ namespace Eagle
         DirectionalLightUBO dir_light;
     };
 
+    struct ShadowPerFrameUBO
+    {
+        glm::mat4 proj_view_matrix;
+    };
+
+    struct ShadowPerDrawUBO
+    {
+        glm::mat4 model_matrix;
+    };
+
     // Vulkan resource
 
     struct VulkanMesh

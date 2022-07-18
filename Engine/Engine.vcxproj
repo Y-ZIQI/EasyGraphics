@@ -170,6 +170,7 @@
     <ClInclude Include="source\function\render\passes\gbuffer_pass.h" />
     <ClInclude Include="source\function\render\passes\postprocess_pass.h" />
     <ClInclude Include="source\function\render\passes\shading_pass.h" />
+    <ClInclude Include="source\function\render\passes\shadow_pass.h" />
     <ClInclude Include="source\function\render\render_pipeline.h" />
     <ClInclude Include="source\function\render\render_resource.h" />
     <ClInclude Include="source\function\render\render_system.h" />
@@ -199,6 +200,7 @@
     <ClCompile Include="source\function\render\passes\gbuffer_pass.cpp" />
     <ClCompile Include="source\function\render\passes\postprocess_pass.cpp" />
     <ClCompile Include="source\function\render\passes\shading_pass.cpp" />
+    <ClCompile Include="source\function\render\passes\shadow_pass.cpp" />
     <ClCompile Include="source\function\render\render_pipeline.cpp" />
     <ClCompile Include="source\function\render\render_resource.cpp" />
     <ClCompile Include="source\function\render\render_system.cpp" />

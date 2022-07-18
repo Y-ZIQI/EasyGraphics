@@ -16,5 +16,8 @@ namespace Eagle
 
 		const char* tonemapping_vert_path = "../Engine/shaders/compiled/tonemapping_vert.spv";
 		const char* tonemapping_frag_path = "../Engine/shaders/compiled/tonemapping_frag.spv";
+
+		const char* shadow_vert_path = "../Engine/shaders/compiled/shadow_vert.spv";
+		const char* shadow_frag_path = "../Engine/shaders/compiled/shadow_frag.spv";
 	};
 }

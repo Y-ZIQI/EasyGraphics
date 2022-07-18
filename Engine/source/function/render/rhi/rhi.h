@@ -7,6 +7,7 @@
 #include "function/render/rhi/vulkan/vulkan_rhi.h"
 #include "function/render/rhi/vulkan/vulkan_resource.h"
 
+#include "function/render/passes/shadow_pass.h"
 #include "function/render/passes/gbuffer_pass.h"
 #include "function/render/passes/shading_pass.h"
 #include "function/render/passes/postprocess_pass.h"
