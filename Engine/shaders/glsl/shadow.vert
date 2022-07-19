@@ -15,5 +15,6 @@ layout(location = 3) in vec3 inTangent;
 layout(location = 4) in vec3 inBitangent;
 
 void main() {
-    gl_Position = global_vars.proj_view * per_draw_vers.model * vec4(inPosition, 1.0);
+    mat4 m = global_vars.proj_view;
+    gl_Position = m * per_draw_vers.model * vec4(inPosition, 1.0);
 }

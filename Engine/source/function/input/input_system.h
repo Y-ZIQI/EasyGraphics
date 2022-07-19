@@ -1,6 +1,7 @@
 #pragma once
 
 #include "function/render/window_system.h"
+#include "function/render/render_system.h"
 #include "function/world/world_manager.h"
 
 #include <set>
@@ -11,6 +12,7 @@ namespace Eagle
 	struct InputSystemInitInfo
 	{
 		std::shared_ptr<WindowSystem> window_system;
+		std::shared_ptr<RenderSystem> render_system;
 		std::shared_ptr<WorldManager> world;
 	};
 
@@ -41,6 +43,7 @@ namespace Eagle
 		float m_cursor_delta_y = 0.0f;
 
 		std::shared_ptr<WindowSystem> m_window_system;
+		std::shared_ptr<RenderSystem> m_render_system;
 		std::shared_ptr<WorldManager> m_world;
 	};
 }

@@ -18,6 +18,10 @@ namespace Eagle
 	{
 		if (m_render_pipeline->render())
 			m_render_pipeline->recreateSwapChain();
+		if (m_reload) {
+			m_reload = false;
+			m_render_pipeline->reload();
+		}
 	}
 
 	void RenderSystem::cleanup()

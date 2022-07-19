@@ -57,11 +57,18 @@ void main() {
     vec4 specular = texture(specularTex, fragTexCoord);
     float depth = texture(depthTex, fragTexCoord).r;
 
+    if(fragTexCoord.x < 0.5 && fragTexCoord.y < 0.5){
+    float d = texture(dirlightShadowMap, fragTexCoord * 2.0).r;
+    outColor = vec4(d,d,d,1.0);
+    }else if(fragTexCoord.x > 0.5 && fragTexCoord.y < 0.5){
+    outColor = vec4(position.xyz, 1.0);       
+    }else{
     vec3 color = shading(position, normal, baseColor, specular, depth);
-    outColor = vec4(color, 1.0);
+    color = pow(color, vec3(2.2));
+    outColor = vec4(color, 1.0);      
 
-    // float d = texture(dirlightShadowMap, fragTexCoord).r;
-    // outColor = vec4(d,d,d,1.0);
+    }
+
     // vec3 d = global_vars.camera_pos - position.xyz;    
     // outColor = vec4(d, 1.0);
 }

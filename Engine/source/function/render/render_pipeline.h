@@ -22,6 +22,7 @@ namespace Eagle
 		void cleanup();
 
 		void recreateSwapChain();
+		void reload();
 
 		std::shared_ptr<RHI> m_rhi;
 

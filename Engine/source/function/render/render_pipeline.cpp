@@ -43,6 +43,7 @@ namespace Eagle
 		}
 
 		// Shadow Pass
+		m_directional_shadow_pass->m_per_frame_ubo.proj_view_matrix = m_camera.getViewProj();
 		m_directional_shadow_pass->m_per_frame_ubo.proj_view_matrix = m_scene->m_dir_light.getViewProj(m_camera, 10.0f);
 		m_directional_shadow_pass->draw();
 
@@ -79,5 +80,13 @@ namespace Eagle
 		m_gbuffer_pass->updateRecreateSwapChain();
 		m_shading_pass->updateRecreateSwapChain();
 		m_postprocess_pass->updateRecreateSwapChain();
+	}
+
+	void RenderPipeline::reload()
+	{
+		m_directional_shadow_pass->reload();
+		m_gbuffer_pass->reload();
+		m_shading_pass->reload();
+		m_postprocess_pass->reload();
 	}
 }

@@ -52,12 +52,13 @@ namespace Eagle
 
 		virtual void initialize(VulkanPassInitInfo init_info);
 		virtual void draw() = 0;
+		virtual void reload();
 		virtual void cleanupSwapChain();
 		virtual void cleanup();
 
-		/*virtual void setupRenderPass() = 0;
-		virtual void setupDescriptorSetLayout() = 0;
+		virtual void setupRenderPass() = 0;
 		virtual void setupPipelines() = 0;
+		/*virtual void setupDescriptorSetLayout() = 0;
 		virtual void setupFramebuffers() = 0;
 		virtual void setupUniformBuffers() = 0;
 		virtual void setupDescriptorSets() = 0;*/

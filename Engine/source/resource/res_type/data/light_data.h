@@ -21,10 +21,13 @@ namespace Eagle
 
 		// Inputs: current camera and shadow distance
 		glm::mat4 getViewProj(const Camera& camera, float distance) {
-			auto view = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), direction, abs(direction[1]) > 0.999f ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f));
+			const float light_to_camera = 10.0f;
+			const glm::vec3& cp = camera.m_data.m_position;
+
+			auto view = glm::lookAt(cp - light_to_camera * direction, cp, abs(direction[1]) > 0.999f ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f));
 
 			float fov = camera.m_data.m_aspect.x, aspect = camera.m_data.m_aspect.y;
-			glm::vec3 p = camera.m_data.m_position + distance * camera.m_front;
+			glm::vec3 p = cp + distance * camera.m_front;
 			float w2 = distance * tanf(fov / 2.0f);
 			glm::vec3 r = w2 * camera.m_right;
 			glm::vec3 u = w2 * camera.m_up / aspect;
@@ -35,15 +38,20 @@ namespace Eagle
 				p - r - u
 			};
 
-			glm::vec3 minB = camera.m_data.m_position, maxB = camera.m_data.m_position; // min and max bound for XYZ
+			glm::vec4 p0 = view * glm::vec4(cp, 1.0);
+			p0 = p0 / p0.w;
+			glm::vec4 minB = p0, maxB = p0; // min and max bound for XYZ
 
 			for (int i = 0; i < 4; i++) {
-				minB = glm::min(minB, points[i]);
-				maxB = glm::max(maxB, points[i]);
+				glm::vec4 np = view * glm::vec4(points[i], 1.0);
+				np = np / np.w;
+				minB = glm::min(minB, np);
+				maxB = glm::max(maxB, np);
 			}		
 
-			auto proj = glm::ortho(minB.x, maxB.x, minB.y, maxB.y, minB.z, maxB.z);
-			//proj[1][1] *= -1;
+			auto proj = glm::ortho(minB.x - 5.0f, maxB.x + 5.0f, minB.y - 5.0f, maxB.y + 5.0f, -maxB.z - 10.0f, -minB.z + 10.0f);
+			//auto proj = glm::ortho(cp.x - 5.0f, cp.x + 5.0f, cp.y - 5.0f, cp.y + 5.0f, -1000.0f, 1000.0f);
+			proj[1][1] *= -1;
 			return proj * view;
 		}
 

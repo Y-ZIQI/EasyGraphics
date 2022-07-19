@@ -28,5 +28,7 @@ namespace Eagle
 
 		std::shared_ptr<RenderResource> m_render_resource;
 		std::shared_ptr<RenderPipeline> m_render_pipeline;
+
+		bool m_reload = false;
 	};
 }

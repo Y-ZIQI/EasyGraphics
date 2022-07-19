@@ -8,6 +8,15 @@ namespace Eagle
         m_render_resource = init_info.render_resource;
     }
 
+    void VulkanPass::reload()
+    {
+        for (auto& pipeline_base : m_render_pipelines) {
+            vkDestroyPipeline(m_rhi->m_device, pipeline_base.pipeline, nullptr);
+            vkDestroyPipelineLayout(m_rhi->m_device, pipeline_base.layout, nullptr);
+        }
+        setupPipelines();
+    }
+
     void VulkanPass::cleanupSwapChain()
     {
         for (auto attachment : m_framebuffer.attachments) {

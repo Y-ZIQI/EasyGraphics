@@ -17,6 +17,7 @@ namespace Eagle
 			std::placeholders::_1, 
 			std::placeholders::_2,
 			std::placeholders::_3));
+		m_render_system = init_info.render_system;
 		m_world = init_info.world;
 
 		m_keys[GLFW_KEY_W] = false;
@@ -66,6 +67,10 @@ namespace Eagle
 			Camera& camera = m_world->m_current_scene->getCamera();
 			glm::vec3 forward = -delta_time * WorldUp;
 			camera.move(forward);
+		}
+		if (m_keys[GLFW_KEY_R]) {
+			m_render_system->m_reload = true;
+			m_keys[GLFW_KEY_R] = false;
 		}
 	}
 
