@@ -46,7 +46,7 @@ vec3 shading(vec4 position, vec4 normal, vec4 baseColor, vec4 specular, float de
     sd.kS = 1.0 - sd.kD;
 
     vec3 color = vec3(0.0);
-    color += evalDirectionalLight(sd, global_vars.dir_light);
+    color += evalDirectionalLight(sd, global_vars.dir_light, dirlightShadowMap);
     return color;
 }
 
@@ -57,11 +57,9 @@ void main() {
     vec4 specular = texture(specularTex, fragTexCoord);
     float depth = texture(depthTex, fragTexCoord).r;
 
-    if(fragTexCoord.x < 0.5 && fragTexCoord.y < 0.5){
-    float d = texture(dirlightShadowMap, fragTexCoord * 2.0).r;
+    if(fragTexCoord.x < 0.25 && fragTexCoord.y < 0.25){
+    float d = texture(dirlightShadowMap, fragTexCoord * 4.0).r;
     outColor = vec4(d,d,d,1.0);
-    }else if(fragTexCoord.x > 0.5 && fragTexCoord.y < 0.5){
-    outColor = vec4(position.xyz, 1.0);       
     }else{
     vec3 color = shading(position, normal, baseColor, specular, depth);
     color = pow(color, vec3(2.2));

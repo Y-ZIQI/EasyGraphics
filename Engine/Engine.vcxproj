@@ -163,6 +163,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="source\core\math\math.h" />
     <ClInclude Include="source\engine.h" />
     <ClInclude Include="source\function\global\global.h" />
     <ClInclude Include="source\function\global\global_resource.h" />
@@ -193,6 +194,7 @@
     <ClInclude Include="source\resource\shader\shader_manager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\core\math\math.cpp" />
     <ClCompile Include="source\engine.cpp" />
     <ClCompile Include="source\function\global\global.cpp" />
     <ClCompile Include="source\function\global\global_resource.cpp" />

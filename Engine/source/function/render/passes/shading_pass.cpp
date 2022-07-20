@@ -414,7 +414,7 @@ namespace Eagle
 			}
 
 			VkDescriptorImageInfo shadow_map_info = {};
-			shadow_map_info.sampler = VulkanUtil::getNearestSampler(m_rhi->m_physical_device, m_rhi->m_device);
+			shadow_map_info.sampler = VulkanUtil::getShadowMapSampler(m_rhi->m_physical_device, m_rhi->m_device);
 			shadow_map_info.imageView = m_shadow_map_ptr->attachments[0].view;
 			shadow_map_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 

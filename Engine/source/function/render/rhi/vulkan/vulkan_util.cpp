@@ -5,6 +5,7 @@ namespace Eagle
     std::unordered_map<uint32_t, VkSampler> VulkanUtil::m_mipmap_sampler_map;
     VkSampler VulkanUtil::m_nearest_sampler = VK_NULL_HANDLE;
     VkSampler VulkanUtil::m_linear_sampler = VK_NULL_HANDLE;
+    VkSampler VulkanUtil::m_shadow_map_sampler = VK_NULL_HANDLE;
 
     uint32_t VulkanUtil::findMemoryType(VkPhysicalDevice physical_device, uint32_t type_filter, VkMemoryPropertyFlags properties_flag)
     {
@@ -453,6 +454,41 @@ namespace Eagle
         return m_linear_sampler;
     }
 
+    VkSampler VulkanUtil::getShadowMapSampler(VkPhysicalDevice physical_device, VkDevice device)
+    {
+        if (m_shadow_map_sampler == VK_NULL_HANDLE)
+        {
+            VkPhysicalDeviceProperties physical_device_properties{};
+            vkGetPhysicalDeviceProperties(physical_device, &physical_device_properties);
+
+            VkSamplerCreateInfo samplerInfo{};
+
+            samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+            samplerInfo.magFilter = VK_FILTER_NEAREST;
+            samplerInfo.minFilter = VK_FILTER_NEAREST;
+            samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+            samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+            samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+            samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+            samplerInfo.mipLodBias = 0.0f;
+            samplerInfo.anisotropyEnable = VK_FALSE;
+            samplerInfo.maxAnisotropy = physical_device_properties.limits.maxSamplerAnisotropy; // close :1.0f
+            samplerInfo.compareEnable = VK_FALSE;
+            samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+            samplerInfo.minLod = 0.0f;
+            samplerInfo.maxLod = 8.0f;
+            samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+            samplerInfo.unnormalizedCoordinates = VK_FALSE;
+
+            if (vkCreateSampler(device, &samplerInfo, nullptr, &m_shadow_map_sampler) != VK_SUCCESS)
+            {
+                throw std::runtime_error("failed to create texture sampler!");
+            }
+        }
+
+        return m_shadow_map_sampler;
+    }
+
     void VulkanUtil::destroySamplers(VkDevice device)
     {
         for (auto sampler : m_mipmap_sampler_map)
@@ -460,10 +496,18 @@ namespace Eagle
             vkDestroySampler(device, sampler.second, nullptr);
         }
         m_mipmap_sampler_map.clear();
-        vkDestroySampler(device, m_nearest_sampler, nullptr);
-        m_nearest_sampler = VK_NULL_HANDLE;
-        vkDestroySampler(device, m_linear_sampler, nullptr);
-        m_linear_sampler = VK_NULL_HANDLE;
+        if (m_nearest_sampler != VK_NULL_HANDLE) {
+            vkDestroySampler(device, m_nearest_sampler, nullptr);
+            m_nearest_sampler = VK_NULL_HANDLE;
+        }
+        if (m_linear_sampler != VK_NULL_HANDLE) {
+            vkDestroySampler(device, m_linear_sampler, nullptr);
+            m_linear_sampler = VK_NULL_HANDLE;
+        }
+        if (m_shadow_map_sampler != VK_NULL_HANDLE) {
+            vkDestroySampler(device, m_shadow_map_sampler, nullptr);
+            m_shadow_map_sampler = VK_NULL_HANDLE;
+        }
     }
 
 }

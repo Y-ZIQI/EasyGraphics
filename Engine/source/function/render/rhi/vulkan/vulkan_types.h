@@ -84,8 +84,10 @@ namespace Eagle
 
     struct DirectionalLightUBO
     {
-        alignas(16) glm::vec4 intensity{ 1.0f, 1.0f, 0.0f, 0.0f };
-        alignas(16) glm::vec4 direction{ 2.0f, -2.0f, -1.0f, 0.0f };
+        alignas(16) glm::vec4 intensity{ 0.0f, 0.0f, 0.0f, 0.0f };
+        alignas(16) glm::vec4 direction{ 0.0f, 0.0f, 0.0f, 0.0f };
+        alignas(16) glm::vec4 status{ 512.0f, 0.0f, 0.0f, 0.0f };
+        alignas(16) glm::mat4 proj_view_matrix;
     };
 
     struct ShadingPerFrameUBO

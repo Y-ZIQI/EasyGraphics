@@ -6,11 +6,14 @@
 struct DirectionalLight{
     // (R,G,B,ambient)
     vec4 intensity;
-    // (X,Y,Z,_)
+    // (X,Y,Z,distance to camera)
     vec4 direction;
 
+    // (resolution, frustum, range_z, _)
+    vec4 status;
+    mat4 proj_view;
+
     // bool has_shadow;
-    // mat4 viewProj;
     // float frustum, range_z;
     // sampler2D shadowMap;
     // float resolution;
@@ -67,6 +70,26 @@ struct ShadingData{
     vec3 kS;
 };
 
+bool posFromLight(mat4 proj_view, vec3 position, out vec3 ndc){
+    vec4 fromLight = proj_view * vec4(position, 1.0);
+    ndc = fromLight.xyz / fromLight.w;
+    ndc.xy = ndc.xy * 0.5 + 0.5;
+    if(min(ndc.x, ndc.y) <= 0.0 || max(ndc.x, ndc.y) >= 1.0){
+        return false;
+    }
+    return true;
+}
+
+float dirlight_visibility(DirectionalLight dir_light, sampler2D shadowmap, vec3 position, float bias){
+    vec3 ndc;
+    if(!posFromLight(dir_light.proj_view, position, ndc)){
+        return 1.0;
+    }
+    float mindep = texture(shadowmap, ndc.xy).r;
+    float zReceiver = ndc.z;
+    return step(zReceiver, mindep + bias);
+}
+
 vec3 evalLight(ShadingData sd, LightSample ls){
     vec3 color = vec3(0.0);
     vec3 brdf = sd.kD * sd.baseColor * M_1_PI + sd.kS * BRDF(sd.specular, sd.roughness, ls.NdotH, ls.NdotL, sd.NdotV, ls.LdotH);
@@ -74,7 +97,7 @@ vec3 evalLight(ShadingData sd, LightSample ls){
     return color;
 }
 
-vec3 evalDirectionalLight(ShadingData sd, DirectionalLight light){
+vec3 evalDirectionalLight(ShadingData sd, DirectionalLight light, sampler2D shadowmap){
     LightSample ls;
     ls.L = -normalize(light.direction.xyz);
     ls.NdotL = dot(sd.N, ls.L);
@@ -82,8 +105,10 @@ vec3 evalDirectionalLight(ShadingData sd, DirectionalLight light){
     ls.NdotH = dot(sd.N, H);
     ls.LdotH = dot(ls.L, H);
     ls.intensity = light.intensity.rgb;
+
+    float vis = dirlight_visibility(light, shadowmap, sd.pos, 0.001);
     
-    return evalLight(sd, ls);
+    return vis * evalLight(sd, ls);
 }
 
 #endif

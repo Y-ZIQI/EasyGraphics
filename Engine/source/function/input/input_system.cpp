@@ -58,12 +58,12 @@ namespace Eagle
 			glm::vec3 forward = delta_time * camera.m_right;
 			camera.move(forward);
 		}
-		if (m_keys[GLFW_KEY_Q]) {
+		if (m_keys[GLFW_KEY_E]) {
 			Camera& camera = m_world->m_current_scene->getCamera();
 			glm::vec3 forward = delta_time * WorldUp;
 			camera.move(forward);
 		}
-		if (m_keys[GLFW_KEY_E]) {
+		if (m_keys[GLFW_KEY_Q]) {
 			Camera& camera = m_world->m_current_scene->getCamera();
 			glm::vec3 forward = -delta_time * WorldUp;
 			camera.move(forward);

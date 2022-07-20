@@ -49,6 +49,9 @@
     <Filter Include="function\render\passes">
       <UniqueIdentifier>{6535e762-150f-42b7-b23c-071fc013a33e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="core\math">
+      <UniqueIdentifier>{aaadce8d-1537-4cae-9937-ebc90f3b558b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\function\render\rhi\vulkan\vulkan_rhi.h">
@@ -133,6 +136,9 @@
     <ClInclude Include="source\function\render\passes\shadow_pass.h">
       <Filter>function\render\passes</Filter>
     </ClInclude>
+    <ClInclude Include="source\core\math\math.h">
+      <Filter>core\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\engine.cpp" />
@@ -195,6 +201,9 @@
     </ClCompile>
     <ClCompile Include="source\function\render\passes\shadow_pass.cpp">
       <Filter>function\render\passes</Filter>
+    </ClCompile>
+    <ClCompile Include="source\core\math\math.cpp">
+      <Filter>core\math</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

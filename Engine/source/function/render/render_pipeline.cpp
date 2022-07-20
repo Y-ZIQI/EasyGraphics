@@ -8,7 +8,7 @@ namespace Eagle
 		m_render_resource = init_info.render_resource;
 
 		m_directional_shadow_pass = std::make_shared<ShadowPass>();
-		m_directional_shadow_pass->initialize({ init_info.rhi, init_info.render_resource, glm::uvec2(512, 512) });
+		m_directional_shadow_pass->initialize({ init_info.rhi, init_info.render_resource, glm::uvec2(1024, 1024) });
 
 		m_gbuffer_pass = std::make_shared<GBufferPass>();
 		m_gbuffer_pass->initialize({ init_info.rhi, init_info.render_resource });
@@ -43,8 +43,8 @@ namespace Eagle
 		}
 
 		// Shadow Pass
-		m_directional_shadow_pass->m_per_frame_ubo.proj_view_matrix = m_camera.getViewProj();
-		m_directional_shadow_pass->m_per_frame_ubo.proj_view_matrix = m_scene->m_dir_light.getViewProj(m_camera, 10.0f);
+		auto dir_light_proj_view = m_scene->m_dir_light.getViewProj(m_camera, 3.0f);
+		m_directional_shadow_pass->m_per_frame_ubo.proj_view_matrix = dir_light_proj_view;
 		m_directional_shadow_pass->draw();
 
 		// GBuffer Pass
@@ -56,7 +56,9 @@ namespace Eagle
 		m_shading_pass->m_per_frame_ubo.proj_view_matrix = m_camera.getViewProj();
 		m_shading_pass->m_per_frame_ubo.camera_pos = m_camera.m_data.m_position;
 		m_shading_pass->m_per_frame_ubo.dir_light.intensity = { m_scene->m_dir_light.intensity, m_scene->m_dir_light.ambient };
-		m_shading_pass->m_per_frame_ubo.dir_light.direction = { m_scene->m_dir_light.direction, 0.0 };
+		m_shading_pass->m_per_frame_ubo.dir_light.direction = { m_scene->m_dir_light.direction, m_scene->m_dir_light.distance_to_camera };
+		m_shading_pass->m_per_frame_ubo.dir_light.status = { (float)m_directional_shadow_pass->m_resolution.x, 0.0f, 0.0f, 0.0f };
+		m_shading_pass->m_per_frame_ubo.dir_light.proj_view_matrix = dir_light_proj_view;
 		m_shading_pass->draw();
 
 		// Post process Pass

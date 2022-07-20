@@ -20,6 +20,6 @@ vec3 ACESToneMapping(vec3 color)
 void main() {
     vec3 color = ACESToneMapping(texture(colorTex, fragTexCoord).rgb);
     // color = texture(colorTex, fragTexCoord).rgb;
-    color = pow(color, vec3(2.2));
+    // color = pow(color, vec3(2.2));
     outColor = vec4(color, 1.0);
 }

@@ -82,11 +82,13 @@ namespace Eagle
 		static VkSampler getMipmapSampler(VkPhysicalDevice physical_device, VkDevice device, uint32_t width, uint32_t height);
 		static VkSampler getNearestSampler(VkPhysicalDevice physical_device, VkDevice device);
 		static VkSampler getLinearSampler(VkPhysicalDevice physical_device, VkDevice device);
+		static VkSampler getShadowMapSampler(VkPhysicalDevice physical_device, VkDevice device);
 		static void      destroySamplers(VkDevice device);
 
 	private:
 		static std::unordered_map<uint32_t, VkSampler> m_mipmap_sampler_map;
 		static VkSampler                               m_nearest_sampler;
 		static VkSampler                               m_linear_sampler;
+		static VkSampler                               m_shadow_map_sampler;
 	};
 }

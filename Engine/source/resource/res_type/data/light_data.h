@@ -1,11 +1,8 @@
 #pragma once
 
-#include "camera.h"
+#include "core/math/math.h"
 
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/hash.hpp>
+#include "camera.h"
 
 #include <vector>
 #include <string>
@@ -18,13 +15,13 @@ namespace Eagle
 		glm::vec3 direction;
 		glm::vec3 intensity;
 		float ambient;
+		float distance_to_camera = 10.0f;
 
 		// Inputs: current camera and shadow distance
 		glm::mat4 getViewProj(const Camera& camera, float distance) {
-			const float light_to_camera = 10.0f;
 			const glm::vec3& cp = camera.m_data.m_position;
 
-			auto view = glm::lookAt(cp - light_to_camera * direction, cp, abs(direction[1]) > 0.999f ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f));
+			auto view = glm::lookAt(cp - distance_to_camera * direction, cp, abs(direction[1]) > 0.999f ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f));
 
 			float fov = camera.m_data.m_aspect.x, aspect = camera.m_data.m_aspect.y;
 			glm::vec3 p = cp + distance * camera.m_front;
@@ -49,8 +46,7 @@ namespace Eagle
 				maxB = glm::max(maxB, np);
 			}		
 
-			auto proj = glm::ortho(minB.x - 5.0f, maxB.x + 5.0f, minB.y - 5.0f, maxB.y + 5.0f, -maxB.z - 10.0f, -minB.z + 10.0f);
-			//auto proj = glm::ortho(cp.x - 5.0f, cp.x + 5.0f, cp.y - 5.0f, cp.y + 5.0f, -1000.0f, 1000.0f);
+			auto proj = Math::ortho(minB.x - 1.0f, maxB.x + 1.0f, -maxB.y - 1.0f, -minB.y + 1.0f, -maxB.z - distance_to_camera, -minB.z + distance_to_camera);
 			proj[1][1] *= -1;
 			return proj * view;
 		}

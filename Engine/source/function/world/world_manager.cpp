@@ -18,7 +18,7 @@ namespace Eagle
 			//glm::vec2(glm::radians(45.0f), m_rhi->m_swapchain_extent.width / (float)m_rhi->m_swapchain_extent.height),
 			glm::vec2(glm::radians(45.0f), 1280 / (float)720),
 			0.0f, 0.0f,
-			0.1f, 10.0f
+			0.1f, 100.0f
 		});
 		m_current_scene->m_cameras.push_back(n_camera);
 		m_current_scene->m_current_camera = 0;
@@ -34,7 +34,7 @@ namespace Eagle
 			//glm::vec2(glm::radians(45.0f), m_rhi->m_swapchain_extent.width / (float)m_rhi->m_swapchain_extent.height),
 			glm::vec2(glm::radians(60.0f), 1280 / (float)720),
 			0.0f, 0.0f,
-			0.1f, 10.0f
+			0.1f, 100.0f
 		});
 		m_current_scene->m_cameras.push_back(n_camera);
 		m_current_scene->m_current_camera = 0;
@@ -50,7 +50,7 @@ namespace Eagle
 			//glm::vec2(glm::radians(45.0f), m_rhi->m_swapchain_extent.width / (float)m_rhi->m_swapchain_extent.height),
 			glm::vec2(glm::radians(45.0f), 1280 / (float)720),
 			0.0f, 0.0f,
-			0.1f, 10.0f
+			0.1f, 100.0f
 			});
 		m_current_scene->m_cameras.push_back(n_camera);
 		m_current_scene->m_current_camera = 0;
