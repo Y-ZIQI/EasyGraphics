@@ -31,5 +31,4 @@ namespace Eagle
 		m_window_system->cleanup();
 		m_window_system.reset();
 	}
-
 }

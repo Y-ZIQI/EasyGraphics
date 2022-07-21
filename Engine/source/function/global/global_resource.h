@@ -20,4 +20,13 @@ namespace Eagle
 	};
 
 	extern RuntimeGlobalResource g_global_resource;
+
+	class RuntimeGlobalSettings
+	{
+	public:
+		int CSM_maps = 3;
+		float CSM_distances[4] = { 0.0001f, 1.0, 3.0, 10.0 };
+	};
+
+	extern RuntimeGlobalSettings g_global_setting;
 }

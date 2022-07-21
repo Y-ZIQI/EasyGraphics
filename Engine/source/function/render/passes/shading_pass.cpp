@@ -7,7 +7,11 @@ namespace Eagle
 	void ShadingPass::initialize(ShadingPassInitInfo init_info)
 	{
 		VulkanPass::initialize({ init_info.rhi , init_info.render_resource });
-		m_shadow_map_ptr = &init_info.shadow_pass_ptr->m_framebuffer;
+
+		m_shadow_map_ptrs.resize(g_global_setting.CSM_maps);
+		for (int i = 0; i < g_global_setting.CSM_maps; i++) {
+			m_shadow_map_ptrs[i] = &init_info.shadow_pass_ptrs[i]->m_framebuffer;
+		}
 		m_gbuffer_ptr = &init_info.gbuffer_pass_ptr->m_framebuffer;
 
 		setupAttachments();
@@ -140,6 +144,8 @@ namespace Eagle
 		m_descriptors.resize(2);
 
 		{
+			std::vector<VkDescriptorSetLayoutBinding> bindings(g_global_setting.CSM_maps + 1);
+
 			// Global uniforms
 			VkDescriptorSetLayoutBinding uboLayoutBinding{};
 			uboLayoutBinding.binding = 0;
@@ -147,16 +153,19 @@ namespace Eagle
 			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			uboLayoutBinding.pImmutableSamplers = nullptr;
 			uboLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+			bindings[0] = uboLayoutBinding;
 
-			VkDescriptorSetLayoutBinding shadowMapLayoutBinding{};
-			shadowMapLayoutBinding.binding = 1;
-			shadowMapLayoutBinding.descriptorCount = 1;
-			shadowMapLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			shadowMapLayoutBinding.pImmutableSamplers = nullptr;
-			shadowMapLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+			for (int i = 0; i < g_global_setting.CSM_maps; i++) {
+				VkDescriptorSetLayoutBinding shadowMapLayoutBinding{};
+				shadowMapLayoutBinding.binding = i + 1;
+				shadowMapLayoutBinding.descriptorCount = 1;
+				shadowMapLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				shadowMapLayoutBinding.pImmutableSamplers = nullptr;
+				shadowMapLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+				bindings[i + 1] = shadowMapLayoutBinding;
+			}
 
 			VkDescriptorSetLayoutCreateInfo layoutInfo{};
-			std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, shadowMapLayoutBinding };
 			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 			layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 			layoutInfo.pBindings = bindings.data();
@@ -413,21 +422,25 @@ namespace Eagle
 				vkUpdateDescriptorSets(m_rhi->m_device, 1, &descriptorWrites, 0, nullptr);
 			}
 
-			VkDescriptorImageInfo shadow_map_info = {};
-			shadow_map_info.sampler = VulkanUtil::getShadowMapSampler(m_rhi->m_physical_device, m_rhi->m_device);
-			shadow_map_info.imageView = m_shadow_map_ptr->attachments[0].view;
-			shadow_map_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			std::vector<VkDescriptorImageInfo> shadow_map_infos(g_global_setting.CSM_maps);
+			std::vector<VkWriteDescriptorSet> shadow_map_write_infos(g_global_setting.CSM_maps);
 
-			VkWriteDescriptorSet shadow_map_write_info{};
-			shadow_map_write_info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			shadow_map_write_info.pNext = NULL;
-			shadow_map_write_info.dstSet = m_descriptors[0].descriptor_set;
-			shadow_map_write_info.dstBinding = 1;
-			shadow_map_write_info.dstArrayElement = 0;
-			shadow_map_write_info.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-			shadow_map_write_info.descriptorCount = 1;
-			shadow_map_write_info.pImageInfo = &shadow_map_info;
-			vkUpdateDescriptorSets(m_rhi->m_device, 1, &shadow_map_write_info, 0, nullptr);
+			for (int i = 0; i < g_global_setting.CSM_maps; i++) {
+				shadow_map_infos[i].sampler = VulkanUtil::getShadowMapSampler(m_rhi->m_physical_device, m_rhi->m_device);
+				shadow_map_infos[i].imageView = m_shadow_map_ptrs[i]->attachments[0].view;
+				shadow_map_infos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+				shadow_map_write_infos[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				shadow_map_write_infos[i].pNext = NULL;
+				shadow_map_write_infos[i].dstSet = m_descriptors[0].descriptor_set;
+				shadow_map_write_infos[i].dstBinding = i + 1;
+				shadow_map_write_infos[i].dstArrayElement = 0;
+				shadow_map_write_infos[i].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+				shadow_map_write_infos[i].descriptorCount = 1;
+				shadow_map_write_infos[i].pImageInfo = &shadow_map_infos[i];
+			}
+
+			vkUpdateDescriptorSets(m_rhi->m_device, 3, shadow_map_write_infos.data(), 0, nullptr);
 		}
 
 		{

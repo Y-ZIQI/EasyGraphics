@@ -87,7 +87,9 @@ namespace Eagle
         alignas(16) glm::vec4 intensity{ 0.0f, 0.0f, 0.0f, 0.0f };
         alignas(16) glm::vec4 direction{ 0.0f, 0.0f, 0.0f, 0.0f };
         alignas(16) glm::vec4 status{ 512.0f, 0.0f, 0.0f, 0.0f };
-        alignas(16) glm::mat4 proj_view_matrix;
+        alignas(16) glm::mat4 proj_view_matrix_1;
+        alignas(16) glm::mat4 proj_view_matrix_2;
+        alignas(16) glm::mat4 proj_view_matrix_3;
     };
 
     struct ShadingPerFrameUBO

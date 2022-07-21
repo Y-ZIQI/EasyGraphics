@@ -9,9 +9,11 @@ struct DirectionalLight{
     // (X,Y,Z,distance to camera)
     vec4 direction;
 
-    // (resolution, frustum, range_z, _)
+    // (resolution, far1, far2, far3)
     vec4 status;
-    mat4 proj_view;
+    mat4 proj_view_1;
+    mat4 proj_view_2;
+    mat4 proj_view_3;
 
     // bool has_shadow;
     // float frustum, range_z;
@@ -82,7 +84,7 @@ bool posFromLight(mat4 proj_view, vec3 position, out vec3 ndc){
 
 float dirlight_visibility(DirectionalLight dir_light, sampler2D shadowmap, vec3 position, float bias){
     vec3 ndc;
-    if(!posFromLight(dir_light.proj_view, position, ndc)){
+    if(!posFromLight(dir_light.proj_view_1, position, ndc)){
         return 1.0;
     }
     float mindep = texture(shadowmap, ndc.xy).r;

@@ -16,6 +16,7 @@ namespace Eagle
 {
 	typedef VulkanRHI RHI;
 	typedef VulkanRenderResource RHIRenderResource;
+	typedef VulkanPass RHIPass;
 
 	//class RHI : public VulkanRHI{
 	//public:

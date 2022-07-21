@@ -13,4 +13,6 @@ namespace Eagle
 	{
 		m_shaders.reset();
 	}
+
+	RuntimeGlobalSettings g_global_setting;
 }

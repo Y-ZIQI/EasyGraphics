@@ -8,7 +8,9 @@ layout(set = 0, binding = 0) uniform GlobalUniforms
     vec3 camera_pos;
     DirectionalLight dir_light;
 }global_vars;
-layout(set = 0, binding = 1) uniform sampler2D dirlightShadowMap;
+layout(set = 0, binding = 1) uniform sampler2D dirlightShadowMap_1;
+layout(set = 0, binding = 2) uniform sampler2D dirlightShadowMap_2;
+layout(set = 0, binding = 3) uniform sampler2D dirlightShadowMap_3;
 
 layout(set = 1, binding = 0) uniform sampler2D positionTex;
 layout(set = 1, binding = 1) uniform sampler2D normalTex;
@@ -46,7 +48,7 @@ vec3 shading(vec4 position, vec4 normal, vec4 baseColor, vec4 specular, float de
     sd.kS = 1.0 - sd.kD;
 
     vec3 color = vec3(0.0);
-    color += evalDirectionalLight(sd, global_vars.dir_light, dirlightShadowMap);
+    color += evalDirectionalLight(sd, global_vars.dir_light, dirlightShadowMap_1);
     return color;
 }
 
@@ -58,7 +60,16 @@ void main() {
     float depth = texture(depthTex, fragTexCoord).r;
 
     if(fragTexCoord.x < 0.25 && fragTexCoord.y < 0.25){
-    float d = texture(dirlightShadowMap, fragTexCoord * 4.0).r;
+    float d = texture(dirlightShadowMap_1, fragTexCoord * 4.0).r;
+    d = pow(d, 4.0);
+    outColor = vec4(d,d,d,1.0);
+    }else if(fragTexCoord.x < 0.5 && fragTexCoord.y < 0.25){
+    float d = texture(dirlightShadowMap_2, fragTexCoord * 4.0).r;
+    d = pow(d, 4.0);
+    outColor = vec4(d,d,d,1.0);
+    }else if(fragTexCoord.x < 0.75 && fragTexCoord.y < 0.25){
+    float d = texture(dirlightShadowMap_3, fragTexCoord * 4.0).r;
+    d = pow(d, 4.0);
     outColor = vec4(d,d,d,1.0);
     }else{
     vec3 color = shading(position, normal, baseColor, specular, depth);

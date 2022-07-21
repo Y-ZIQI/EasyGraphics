@@ -9,7 +9,7 @@ namespace Eagle
 		std::shared_ptr<VulkanRHI> rhi;
 		std::shared_ptr<VulkanRenderResource> render_resource;
 
-		std::shared_ptr<VulkanPass> shadow_pass_ptr;
+		std::vector<std::shared_ptr<VulkanPass>> shadow_pass_ptrs;
 		std::shared_ptr<VulkanPass> gbuffer_pass_ptr;
 	};
 
@@ -34,7 +34,7 @@ namespace Eagle
 
 		void updateRecreateSwapChain();
 
-		VulkanFramebuffer* m_shadow_map_ptr;
+		std::vector<VulkanFramebuffer*> m_shadow_map_ptrs;
 		VulkanFramebuffer* m_gbuffer_ptr;
 
 		ShadingPerFrameUBO	m_per_frame_ubo;
