@@ -6,6 +6,8 @@ layout(set = 0, binding = 0) uniform GlobalUniforms
 {
     mat4 proj_view;
     vec3 camera_pos;
+    // (fov(vertical), aspect, near, far)
+    vec4 camera_params;
     DirectionalLight dir_light;
 }global_vars;
 layout(set = 0, binding = 1) uniform sampler2D dirlightShadowMap_1;
@@ -23,6 +25,13 @@ layout(location = 1) in vec2 fragTexCoord;
 
 layout(location = 0) out vec4 outColor;
 
+float linearizeDepth2(vec3 pos){
+    float dist = length(pos - global_vars.camera_pos);
+    float d = 0.5 / tan(global_vars.camera_params.x / 2);
+    float u = (fragTexCoord.x - 0.5) * global_vars.camera_params.y, v = fragTexCoord.y - 0.5;
+    return dist * d / sqrt(d*d + u*u + v*v);
+}
+
 vec3 shading(vec4 position, vec4 normal, vec4 baseColor, vec4 specular, float depth){
     ShadingData sd;
     sd.pos = position.xyz;
@@ -31,6 +40,8 @@ vec3 shading(vec4 position, vec4 normal, vec4 baseColor, vec4 specular, float de
     sd.R = reflect(-sd.V, sd.N);
     sd.NdotV = max(dot(sd.V, sd.N), 0.0);
     sd.depth = depth;
+    sd.linear_depth = linearizeDepth2(sd.pos);
+    // sd.linear_depth = linearizeDepth(depth, global_vars.camera_params.z, global_vars.camera_params.w);
     sd.baseColor = baseColor.rgb;
     sd.ao = 1.0 - specular.r;
     sd.roughness = specular.g;
@@ -48,7 +59,15 @@ vec3 shading(vec4 position, vec4 normal, vec4 baseColor, vec4 specular, float de
     sd.kS = 1.0 - sd.kD;
 
     vec3 color = vec3(0.0);
-    color += evalDirectionalLight(sd, global_vars.dir_light, dirlightShadowMap_1);
+    if(sd.linear_depth <= global_vars.dir_light.status.y){
+        color += evalDirectionalLight(sd, global_vars.dir_light, dirlightShadowMap_1, global_vars.dir_light.proj_view_1);
+    }else if(sd.linear_depth <= global_vars.dir_light.status.z){
+        color += evalDirectionalLight(sd, global_vars.dir_light, dirlightShadowMap_2, global_vars.dir_light.proj_view_2);
+    }else if(sd.linear_depth <= global_vars.dir_light.status.w){
+        color += evalDirectionalLight(sd, global_vars.dir_light, dirlightShadowMap_3, global_vars.dir_light.proj_view_3);
+    }else{
+        color += evalDirectionalLightColor(sd, global_vars.dir_light);
+    }
     return color;
 }
 

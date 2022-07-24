@@ -65,6 +65,7 @@ namespace Eagle
 		// Shading Pass
 		m_shading_pass->m_per_frame_ubo.proj_view_matrix = m_camera.getViewProj();
 		m_shading_pass->m_per_frame_ubo.camera_pos = m_camera.m_data.m_position;
+		m_shading_pass->m_per_frame_ubo.camera_params = { m_camera.m_data.m_aspect, m_camera.m_data.m_z_near, m_camera.m_data.m_z_far };
 		m_shading_pass->m_per_frame_ubo.dir_light.intensity = { m_scene->m_dir_light.intensity, m_scene->m_dir_light.ambient };
 		m_shading_pass->m_per_frame_ubo.dir_light.direction = { m_scene->m_dir_light.direction, m_scene->m_dir_light.distance_to_camera };
 		m_shading_pass->m_per_frame_ubo.dir_light.status = { (float)m_directional_shadow_passes[0]->m_resolution.x, g_global_setting.CSM_distances[1], g_global_setting.CSM_distances[2], g_global_setting.CSM_distances[3] };

@@ -96,6 +96,7 @@ namespace Eagle
     {
         alignas(16) glm::mat4 proj_view_matrix;
         alignas(16) glm::vec3 camera_pos;
+        alignas(16) glm::vec4 camera_params;
         DirectionalLightUBO dir_light;
     };
 

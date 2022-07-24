@@ -60,7 +60,8 @@ struct ShadingData{
     vec3 N;             // Shading normal at shading hit
     vec3 R;
     float NdotV;        // Unclamped, can be negative.
-    float depth;        // Linear depth to camera.
+    float depth;        // depth to camera.
+    float linear_depth;        // Linear depth to camera.
     vec3 baseColor;       
     float ao;           // Ambient Occlusion.
     float roughness;    // This is the original roughness, before re-mapping.
@@ -72,6 +73,12 @@ struct ShadingData{
     vec3 kS;
 };
 
+float linearizeDepth(float depth, float near, float far)
+{
+    vec2 inv = vec2(1.0 / near, 1.0 / far);
+    return 1.0 / (inv.r - depth * (inv.r - inv.g));    
+}
+
 bool posFromLight(mat4 proj_view, vec3 position, out vec3 ndc){
     vec4 fromLight = proj_view * vec4(position, 1.0);
     ndc = fromLight.xyz / fromLight.w;
@@ -82,9 +89,9 @@ bool posFromLight(mat4 proj_view, vec3 position, out vec3 ndc){
     return true;
 }
 
-float dirlight_visibility(DirectionalLight dir_light, sampler2D shadowmap, vec3 position, float bias){
+float dirlightVisibility(DirectionalLight dir_light, sampler2D shadowmap, mat4 proj_view, vec3 position, float bias){
     vec3 ndc;
-    if(!posFromLight(dir_light.proj_view_1, position, ndc)){
+    if(!posFromLight(proj_view, position, ndc)){
         return 1.0;
     }
     float mindep = texture(shadowmap, ndc.xy).r;
@@ -99,7 +106,7 @@ vec3 evalLight(ShadingData sd, LightSample ls){
     return color;
 }
 
-vec3 evalDirectionalLight(ShadingData sd, DirectionalLight light, sampler2D shadowmap){
+vec3 evalDirectionalLightColor(ShadingData sd, DirectionalLight light){
     LightSample ls;
     ls.L = -normalize(light.direction.xyz);
     ls.NdotL = dot(sd.N, ls.L);
@@ -107,10 +114,14 @@ vec3 evalDirectionalLight(ShadingData sd, DirectionalLight light, sampler2D shad
     ls.NdotH = dot(sd.N, H);
     ls.LdotH = dot(ls.L, H);
     ls.intensity = light.intensity.rgb;
+    return evalLight(sd, ls);
+}
 
-    float vis = dirlight_visibility(light, shadowmap, sd.pos, 0.001);
+vec3 evalDirectionalLight(ShadingData sd, DirectionalLight light, sampler2D shadowmap, mat4 proj_view){
+    vec3 color = evalDirectionalLightColor(sd, light);
+    float vis = dirlightVisibility(light, shadowmap, proj_view, sd.pos, 0.001);
     
-    return vis * evalLight(sd, ls);
+    return vis * color;
 }
 
 #endif
