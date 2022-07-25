@@ -3,6 +3,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <dds_image/include/dds.hpp>
+
 namespace Eagle
 {
     void RenderResource::initialize(RenderResourceInitInfo init_info)
@@ -82,23 +84,64 @@ namespace Eagle
     {
         std::shared_ptr<TextureData> texture = std::make_shared<TextureData>();
 
-        int iw, ih, n;
-        stbi_set_flip_vertically_on_load(vflip);
-        texture->m_pixels = stbi_load(file.c_str(), &iw, &ih, &n, 4);
+        std::string extname = file.substr(file.rfind('.', file.size()) + 1);
+        if (extname == "dds") {
+            dds::Image image;
+            dds::readFile(file, &image);
+            texture->m_pixels = image.data.data();
 
-        if (!texture->m_pixels)
-            return nullptr;
+            if (!texture->m_pixels)
+                return nullptr;
 
-        texture->m_width = iw;
-        texture->m_height = ih;
-        texture->m_format = (is_srgb) ? EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_SRGB :
-            EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_UNORM;
-        texture->m_depth = 1;
-        texture->m_array_layers = 1;
-        texture->m_mip_levels = 1;
-        texture->m_type = EAGLE_IMAGE_TYPE::EAGLE_IMAGE_TYPE_2D;
+            texture->m_width = image.width;
+            texture->m_height = image.height;
+            texture->m_format = (is_srgb) ? EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_SRGB :
+                EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_UNORM;
+            texture->m_depth = image.depth;
+            texture->m_array_layers = image.arraySize;
+            texture->m_mip_levels = 1;
+            texture->m_type = EAGLE_IMAGE_TYPE::EAGLE_IMAGE_TYPE_2D;
 
-        return texture;
+            return texture;
+        }
+        /*if (file == "../Engine/resources/models/Arcade/Textures\\CheckerTile_BaseColor.png") {
+            dds::Image image;
+            dds::readFile(file, &image);
+            texture->m_pixels = image.data.data();
+
+            if (!texture->m_pixels)
+                return nullptr;
+
+            texture->m_width = image.width;
+            texture->m_height = image.height;
+            texture->m_format = (is_srgb) ? EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_SRGB :
+                EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_UNORM;
+            texture->m_depth = image.depth;
+            texture->m_array_layers = image.arraySize;
+            texture->m_mip_levels = 1;
+            texture->m_type = EAGLE_IMAGE_TYPE::EAGLE_IMAGE_TYPE_2D;
+
+            return texture;
+        }*/
+        else if (extname == "png") {
+            int iw, ih, n;
+            stbi_set_flip_vertically_on_load(vflip);
+            texture->m_pixels = stbi_load(file.c_str(), &iw, &ih, &n, 4);
+
+            if (!texture->m_pixels)
+                return nullptr;
+
+            texture->m_width = iw;
+            texture->m_height = ih;
+            texture->m_format = (is_srgb) ? EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_SRGB :
+                EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_UNORM;
+            texture->m_depth = 1;
+            texture->m_array_layers = 1;
+            texture->m_mip_levels = 1;
+            texture->m_type = EAGLE_IMAGE_TYPE::EAGLE_IMAGE_TYPE_2D;
+
+            return texture;
+        }
     }
 
     std::shared_ptr<TextureData> RenderResource::loadTexture(const std::string& directory, const std::string& file, bool is_srgb, bool vflip)
