@@ -50,7 +50,7 @@ namespace Eagle
 				maxB = glm::max(maxB, pt);
 			}
 
-			auto proj = Math::ortho(minB.x, maxB.x, -maxB.y, -minB.y, -maxB.z - distance_to_camera, -minB.z + distance_to_camera);
+			auto proj = Math::ortho(minB.x, maxB.x, -maxB.y, -minB.y, -maxB.z - distance_to_camera, -minB.z);
 			proj[1][1] *= -1;
 			return proj * view;
 		}
