@@ -19,5 +19,8 @@ namespace Eagle
 
 		const char* shadow_vert_path = "../Engine/shaders/compiled/shadow_vert.spv";
 		const char* shadow_frag_path = "../Engine/shaders/compiled/shadow_frag.spv";
+
+		const char* blur_vert_path = "../Engine/shaders/compiled/blur_vert.spv";
+		const char* blur_frag_path = "../Engine/shaders/compiled/blur_frag.spv";
 	};
 }

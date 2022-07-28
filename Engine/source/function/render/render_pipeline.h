@@ -33,6 +33,8 @@ namespace Eagle
 		std::shared_ptr<ShadingPass> m_shading_pass;
 		std::shared_ptr<PostprocessPass> m_postprocess_pass;
 
+		std::shared_ptr<ScreenPass> m_blur_pass;
+
 		std::shared_ptr<RenderResource> m_render_resource;
 	};
 }

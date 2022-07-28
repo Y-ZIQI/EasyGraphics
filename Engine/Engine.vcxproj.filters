@@ -139,6 +139,9 @@
     <ClInclude Include="source\core\math\math.h">
       <Filter>core\math</Filter>
     </ClInclude>
+    <ClInclude Include="source\function\render\passes\screen_pass.h">
+      <Filter>function\render\passes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\engine.cpp" />
@@ -204,6 +207,9 @@
     </ClCompile>
     <ClCompile Include="source\core\math\math.cpp">
       <Filter>core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="source\function\render\passes\screen_pass.cpp">
+      <Filter>function\render\passes</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

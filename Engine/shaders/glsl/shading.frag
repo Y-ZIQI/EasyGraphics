@@ -1,6 +1,6 @@
 #version 450
 
-#include "_lighting.glsl"
+#include "headers/_lighting.glsl"
 
 layout(set = 0, binding = 0) uniform GlobalUniforms
 {
@@ -92,7 +92,7 @@ void main() {
     outColor = vec4(d,d,d,1.0);
     }else{
     vec3 color = shading(position, normal, baseColor, specular, depth);
-    color = pow(color, vec3(2.2));
+    // color = pow(color, vec3(2.2));
     outColor = vec4(color, 1.0);      
 
     }

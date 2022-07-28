@@ -23,8 +23,20 @@ namespace Eagle
 		m_shading_pass = std::make_shared<ShadingPass>();
 		m_shading_pass->initialize({ init_info.rhi, init_info.render_resource, pass_ptr, m_gbuffer_pass });
 
+		m_blur_pass = std::make_shared<ScreenPass>();
+		m_blur_pass->initialize({
+			init_info.rhi ,
+			{init_info.rhi->m_swapchain_extent.width, init_info.rhi->m_swapchain_extent.height},
+			g_global_resource.m_shaders->blur_vert_path,
+			g_global_resource.m_shaders->blur_frag_path
+		});
+		m_blur_pass->addSourceTexture(&m_shading_pass->m_framebuffer.attachments[0]);
+		m_blur_pass->addOutputTarget();
+		m_blur_pass->setup();
+
 		m_postprocess_pass = std::make_shared<PostprocessPass>();
-		m_postprocess_pass->initialize({ init_info.rhi, m_shading_pass });
+		//m_postprocess_pass->initialize({ init_info.rhi, m_shading_pass });
+		m_postprocess_pass->initialize({ init_info.rhi, m_blur_pass });
 	}
 
 	bool RenderPipeline::render()
@@ -74,6 +86,9 @@ namespace Eagle
 		m_shading_pass->m_per_frame_ubo.dir_light.proj_view_matrix_3 = dir_light_proj_views[2];
 		m_shading_pass->draw();
 
+		// Blur Pass
+		m_blur_pass->draw();
+
 		// Post process Pass
 		m_postprocess_pass->draw();
 
@@ -89,6 +104,7 @@ namespace Eagle
 		m_directional_shadow_passes.clear();
 		m_gbuffer_pass->cleanup();
 		m_shading_pass->cleanup();
+		m_blur_pass->cleanup();
 		m_postprocess_pass->cleanup();
 	}
 
@@ -97,6 +113,7 @@ namespace Eagle
 		m_rhi->recreateSwapChain();
 		m_gbuffer_pass->updateRecreateSwapChain();
 		m_shading_pass->updateRecreateSwapChain();
+		m_blur_pass->updateRecreateSwapChain();
 		m_postprocess_pass->updateRecreateSwapChain();
 	}
 
@@ -107,6 +124,7 @@ namespace Eagle
 		}
 		m_gbuffer_pass->reload();
 		m_shading_pass->reload();
+		m_blur_pass->reload();
 		m_postprocess_pass->reload();
 	}
 }

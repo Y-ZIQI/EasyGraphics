@@ -68,7 +68,8 @@ namespace Eagle
 		m_framebuffer.height = m_rhi->m_swapchain_extent.height;
 		m_framebuffer.attachments.resize(1);
 
-		m_framebuffer.attachments[0].format = m_rhi->m_swapchain_image_format;
+		//m_framebuffer.attachments[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		m_framebuffer.attachments[0].format = VK_FORMAT_R16G16B16A16_SFLOAT;
 
 		VulkanUtil::createImage(m_rhi->m_physical_device,
 			m_rhi->m_device,

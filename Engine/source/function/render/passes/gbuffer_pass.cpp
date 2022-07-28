@@ -90,8 +90,10 @@ namespace Eagle
 
 		m_framebuffer.attachments[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
 		m_framebuffer.attachments[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-		m_framebuffer.attachments[2].format = VK_FORMAT_R8G8B8A8_SRGB;
-		m_framebuffer.attachments[3].format = VK_FORMAT_R8G8B8A8_SRGB;
+		m_framebuffer.attachments[2].format = VK_FORMAT_R8G8B8A8_UNORM;
+		m_framebuffer.attachments[3].format = VK_FORMAT_R8G8B8A8_UNORM;
+		//m_framebuffer.attachments[2].format = VK_FORMAT_R8G8B8A8_SRGB;
+		//m_framebuffer.attachments[3].format = VK_FORMAT_R8G8B8A8_SRGB;
 
 		for (int i = 0; i < 4; ++i)
 		{
