@@ -39,10 +39,11 @@ namespace Eagle
         n_texture.width = tex_data->m_width;
         n_texture.height = tex_data->m_height;
         n_texture.mip_levels = std::floor(std::log2(std::max(n_texture.width, n_texture.height))) + 1;
+        //n_texture.mip_levels = 1;
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
-        VkDeviceSize imageSize = n_texture.width * n_texture.height * 4;
+        VkDeviceSize imageSize = tex_data->m_size;
 
         VulkanUtil::createBuffer(
             m_rhi->m_physical_device,
@@ -59,12 +60,14 @@ namespace Eagle
         memcpy(data, tex_data->m_pixels, static_cast<size_t>(imageSize));
         vkUnmapMemory(m_rhi->m_device, stagingBufferMemory);
 
+        VkFormat n_format = VulkanUtil::getVulkanFormat(tex_data->m_format, tex_data->m_alpha);
+
         VulkanUtil::createImage(
             m_rhi->m_physical_device,
             m_rhi->m_device,
             n_texture.width,
             n_texture.height,
-            VK_FORMAT_R8G8B8A8_SRGB,
+            n_format,
             VK_IMAGE_TILING_OPTIMAL,
             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -105,12 +108,12 @@ namespace Eagle
         vkDestroyBuffer(m_rhi->m_device, stagingBuffer, nullptr);
         vkFreeMemory(m_rhi->m_device, stagingBufferMemory, nullptr);
 
-        VulkanUtil::generateMipmaps(m_rhi.get(), n_texture.image, VK_FORMAT_R8G8B8A8_SRGB, n_texture.width, n_texture.height, 1, n_texture.mip_levels);
+        VulkanUtil::generateMipmaps(m_rhi.get(), n_texture.image, n_format, n_texture.width, n_texture.height, 1, n_texture.mip_levels);
 
         n_texture.image_view = VulkanUtil::createImageView(
             m_rhi->m_device,
             n_texture.image,
-            VK_FORMAT_R8G8B8A8_SRGB,
+            n_format,
             VK_IMAGE_ASPECT_COLOR_BIT,
             VK_IMAGE_VIEW_TYPE_2D,
             1,
@@ -177,6 +180,8 @@ namespace Eagle
             temp.base_color_texture.width,
             temp.base_color_texture.height
         );
+        //image_info[0].sampler = VulkanUtil::getLinearSampler(m_rhi->m_physical_device, m_rhi->m_device);
+
         image_info[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         image_info[1].imageView = temp.specular_texture.image_view;
         image_info[1].sampler = VulkanUtil::getMipmapSampler(
@@ -185,6 +190,8 @@ namespace Eagle
             temp.specular_texture.width,
             temp.specular_texture.height
         );
+        //image_info[1].sampler = VulkanUtil::getLinearSampler(m_rhi->m_physical_device, m_rhi->m_device);
+
         image_info[2].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         image_info[2].imageView = temp.normal_texture.image_view;
         image_info[2].sampler = VulkanUtil::getMipmapSampler(
@@ -193,6 +200,8 @@ namespace Eagle
             temp.normal_texture.width,
             temp.normal_texture.height
         );
+        //image_info[2].sampler = VulkanUtil::getLinearSampler(m_rhi->m_physical_device, m_rhi->m_device);
+
         image_info[3].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         image_info[3].imageView = temp.emissive_texture.image_view;
         image_info[3].sampler = VulkanUtil::getMipmapSampler(
@@ -201,6 +210,7 @@ namespace Eagle
             temp.emissive_texture.width,
             temp.emissive_texture.height
         );
+        //image_info[3].sampler = VulkanUtil::getLinearSampler(m_rhi->m_physical_device, m_rhi->m_device);
 
         VkWriteDescriptorSet descriptorWrites[5];
 

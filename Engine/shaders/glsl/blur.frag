@@ -22,8 +22,8 @@ vec3 blur3x3(sampler2D src_texture, vec2 uv){
 }
 
 void main() {
-    vec3 color = blur3x3(colorTex, fragTexCoord);
-    // vec3 color = texture(colorTex, fragTexCoord).rgb;
+    // vec3 color = blur3x3(colorTex, fragTexCoord);
+    vec3 color = texture(colorTex, fragTexCoord).rgb;
     // color = pow(color, vec3(2.2));
     outColor = vec4(color, 1.0);
 }

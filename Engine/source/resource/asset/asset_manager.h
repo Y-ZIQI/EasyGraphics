@@ -22,6 +22,10 @@ namespace Eagle
 		~Importer() {};
 
 		std::shared_ptr<MeshData> loadObj(const std::string& model_path);
+		void loadFbxScene(const std::string& scene_path, std::shared_ptr<Scene> n_scene);
+
+	private:
+		void processNode(aiNode* node, glm::mat4 transform, std::shared_ptr<Scene> n_scene);
 	};
 
 	class AssetManager {
@@ -34,9 +38,6 @@ namespace Eagle
 		void loadScene(const std::string& scene_path, const std::string& texture_path, std::shared_ptr<Scene> n_scene);
 		void loadScene(const std::string& scene_path, std::shared_ptr<Scene> n_scene);
 		void loadSceneJson(const std::string& json_path, std::shared_ptr<Scene> n_scene);
-
-	private:
-		void processNode(aiNode* node, glm::mat4 transform, std::shared_ptr<Scene> n_scene);
 		
 		Importer m_importer;
 	};

@@ -435,6 +435,9 @@ namespace Eagle
             samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
             samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
             samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+            //samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            //samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            //samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
             samplerInfo.mipLodBias = 0.0f;
             samplerInfo.anisotropyEnable = VK_FALSE;
             samplerInfo.maxAnisotropy = physical_device_properties.limits.maxSamplerAnisotropy; // close :1.0f
@@ -507,6 +510,73 @@ namespace Eagle
         if (m_shadow_map_sampler != VK_NULL_HANDLE) {
             vkDestroySampler(device, m_shadow_map_sampler, nullptr);
             m_shadow_map_sampler = VK_NULL_HANDLE;
+        }
+    }
+
+    VkFormat VulkanUtil::getVulkanFormat(EAGLE_DXGI_FORMAT format, const bool alpha_flag)
+    {
+        switch (format) {
+        case DXGI_FORMAT_BC1_UNORM: {
+            if (alpha_flag)
+                return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
+            else
+                return VK_FORMAT_BC1_RGB_UNORM_BLOCK;
+        }
+        case DXGI_FORMAT_BC1_UNORM_SRGB: {
+            if (alpha_flag)
+                return VK_FORMAT_BC1_RGBA_SRGB_BLOCK;
+            else
+                return VK_FORMAT_BC1_RGB_SRGB_BLOCK;
+        }
+
+        case DXGI_FORMAT_BC2_UNORM:
+            return VK_FORMAT_BC2_UNORM_BLOCK;
+        case DXGI_FORMAT_BC2_UNORM_SRGB:
+            return VK_FORMAT_BC2_SRGB_BLOCK;
+        case DXGI_FORMAT_BC3_UNORM:
+            return VK_FORMAT_BC3_UNORM_BLOCK;
+        case DXGI_FORMAT_BC3_UNORM_SRGB:
+            return VK_FORMAT_BC3_SRGB_BLOCK;
+        case DXGI_FORMAT_BC4_UNORM:
+            return VK_FORMAT_BC4_UNORM_BLOCK;
+        case DXGI_FORMAT_BC4_SNORM:
+            return VK_FORMAT_BC4_SNORM_BLOCK;
+        case DXGI_FORMAT_BC5_UNORM:
+            return VK_FORMAT_BC5_UNORM_BLOCK;
+        case DXGI_FORMAT_BC5_SNORM:
+            return VK_FORMAT_BC5_SNORM_BLOCK;
+
+        case DXGI_FORMAT_R8G8B8A8_UNORM:
+            return VK_FORMAT_R8G8B8A8_UNORM;
+        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+            return VK_FORMAT_R8G8B8A8_SRGB;
+        case DXGI_FORMAT_R8G8B8A8_UINT:
+            return VK_FORMAT_R8G8B8A8_UINT;
+        case DXGI_FORMAT_R8G8B8A8_SNORM:
+            return VK_FORMAT_R8G8B8A8_SNORM;
+        case DXGI_FORMAT_R8G8B8A8_SINT:
+            return VK_FORMAT_R8G8B8A8_SINT;
+        case DXGI_FORMAT_B8G8R8A8_UNORM:
+            return VK_FORMAT_B8G8R8A8_UNORM;
+        case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+            return VK_FORMAT_B8G8R8A8_SRGB;
+
+        case DXGI_FORMAT_R16G16B16A16_FLOAT:
+            return VK_FORMAT_R16G16B16A16_SFLOAT;
+        case DXGI_FORMAT_R16G16B16A16_SINT:
+            return VK_FORMAT_R16G16B16A16_SINT;
+        case DXGI_FORMAT_R16G16B16A16_UINT:
+            return VK_FORMAT_R16G16B16A16_UINT;
+        case DXGI_FORMAT_R16G16B16A16_UNORM:
+            return VK_FORMAT_R16G16B16A16_UNORM;
+        case DXGI_FORMAT_R16G16B16A16_SNORM:
+            return VK_FORMAT_R16G16B16A16_SNORM;
+
+        case DXGI_FORMAT_R8G8_B8G8_UNORM:
+        case DXGI_FORMAT_G8R8_G8B8_UNORM:
+        case DXGI_FORMAT_YUY2:
+        default:
+            return VK_FORMAT_UNDEFINED;
         }
     }
 

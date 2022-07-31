@@ -15,7 +15,6 @@ namespace Eagle
 
 		void cleanup();
 
-		std::shared_ptr<AssetManager>	m_asset_manager;
 		std::shared_ptr<WorldManager>	m_world_manager;
 		std::shared_ptr<WindowSystem>	m_window_system;
 		std::shared_ptr<InputSystem>	m_input_system;

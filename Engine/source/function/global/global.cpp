@@ -5,8 +5,6 @@ namespace Eagle
 	RuntimeGlobalContext g_global_context;
 
 	void RuntimeGlobalContext::initialize() {
-		m_asset_manager = std::make_shared<AssetManager>();
-
 		m_world_manager = std::make_shared<WorldManager>();
 
 		WindowCreateInfo window_create_info;
@@ -23,8 +21,6 @@ namespace Eagle
 	}
 
 	void RuntimeGlobalContext::cleanup() {
-		m_asset_manager.reset();
-
 		m_render_system->cleanup();
 		m_render_system.reset();
 

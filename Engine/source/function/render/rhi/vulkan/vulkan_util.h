@@ -2,6 +2,8 @@
 
 #include "function/render/rhi/vulkan/vulkan_rhi.h"
 
+#include "resource/res_type/formats.h"
+
 #include <vulkan/vulkan.h>
 
 #include <stdexcept>
@@ -84,6 +86,8 @@ namespace Eagle
 		static VkSampler getLinearSampler(VkPhysicalDevice physical_device, VkDevice device);
 		static VkSampler getShadowMapSampler(VkPhysicalDevice physical_device, VkDevice device);
 		static void      destroySamplers(VkDevice device);
+
+		static VkFormat getVulkanFormat(EAGLE_DXGI_FORMAT format, const bool alpha_flag);
 
 	private:
 		static std::unordered_map<uint32_t, VkSampler> m_mipmap_sampler_map;

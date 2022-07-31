@@ -1,29 +1,13 @@
 #pragma once
 
+#include "resource/res_type/formats.h"
+
 #include <cstdint>
 #include <memory>
 #include <string>
 
 namespace Eagle
 {
-    enum class EAGLE_PIXEL_FORMAT : uint8_t
-    {
-        EAGLE_PIXEL_FORMAT_UNKNOWN = 0,
-        EAGLE_PIXEL_FORMAT_R8G8B8_UNORM,
-        EAGLE_PIXEL_FORMAT_R8G8B8_SRGB,
-        EAGLE_PIXEL_FORMAT_R8G8B8A8_UNORM,
-        EAGLE_PIXEL_FORMAT_R8G8B8A8_SRGB,
-        EAGLE_PIXEL_FORMAT_R32G32_FLOAT,
-        EAGLE_PIXEL_FORMAT_R32G32B32_FLOAT,
-        EAGLE_PIXEL_FORMAT_R32G32B32A32_FLOAT
-    };
-
-    enum class EAGLE_IMAGE_TYPE : uint8_t
-    {
-        EAGLE_IMAGE_TYPE_UNKNOWM = 0,
-        EAGLE_IMAGE_TYPE_2D
-    };
-
     class BufferData
     {
     public:
@@ -54,10 +38,12 @@ namespace Eagle
         uint32_t m_depth{ 0 };
         uint32_t m_mip_levels{ 0 };
         uint32_t m_array_layers{ 0 };
+        bool m_alpha{ false };
         void* m_pixels{ nullptr };
+        uint32_t m_size{ 0 };
 
-        EAGLE_PIXEL_FORMAT m_format{ EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_UNKNOWN };
-        EAGLE_IMAGE_TYPE   m_type{ EAGLE_IMAGE_TYPE::EAGLE_IMAGE_TYPE_UNKNOWM };
+        EAGLE_DXGI_FORMAT m_format{ DXGI_FORMAT_UNKNOWN };
+        EAGLE_IMAGE_TYPE   m_type{ EAGLE_IMAGE_TYPE_UNKNOWM };
 
         TextureData() = default;
         ~TextureData()

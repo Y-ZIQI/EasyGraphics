@@ -76,45 +76,15 @@ namespace Eagle
 		return n_mesh;
 	}
 
-	std::shared_ptr<MeshData> AssetManager::loadStaticMesh(const std::string& model_path)
-	{
-		return m_importer.loadObj(model_path);
-	}
-
-    void AssetManager::loadScene(const std::string& scene_path, const std::string& texture_path, std::shared_ptr<Scene> n_scene)
+    void Importer::loadFbxScene(const std::string& scene_path, std::shared_ptr<Scene> n_scene)
     {
         n_scene->cleanup();
-        //n_scene->m_directory = scene_path.substr(0, scene_path.find_last_of('/') + 1);
-        n_scene->m_directory = std::string("");
-        n_scene->m_texture_filp_vertically = true;
-        MaterialData n_mat;
-        n_mat.m_material_name = texture_path;
-        n_mat.m_base_color_texture_file = texture_path;
-        n_mat.m_specular_texture_file = std::string("");
-        n_mat.m_normal_texture_file = std::string("");
-        n_mat.m_emissive_texture_file = std::string("");
-        n_scene->m_materials[0] = n_mat;
-        auto mesh_ptr = loadStaticMesh(scene_path);
-        n_scene->m_meshes[0] = *mesh_ptr;
-        n_scene->m_material_meshes[0] = { 0 };
-        n_scene->m_transforms[0] = { glm::mat4(1.0f), glm::mat3(1.0f) };
-    }
-
-    void AssetManager::loadScene(const std::string& scene_path, std::shared_ptr<Scene> n_scene)
-    {
-        n_scene->cleanup();
-#ifdef SHOW_LOADING_PROGRESS
-        std::cout << "Read File...";
-#endif
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(scene_path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices);
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
             std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
             return;
         }
-#ifdef SHOW_LOADING_PROGRESS
-        std::cout << "End\n";
-#endif
         n_scene->m_directory = scene_path.substr(0, scene_path.find_last_of('/') + 1);
         n_scene->m_texture_filp_vertically = true;
 
@@ -176,8 +146,8 @@ namespace Eagle
         }
         processNode(scene->mRootNode, glm::mat4(1.0f), n_scene);
     }
-    
-    void AssetManager::processNode(aiNode* node, glm::mat4 transform, std::shared_ptr<Scene> n_scene)
+
+    void Importer::processNode(aiNode* node, glm::mat4 transform, std::shared_ptr<Scene> n_scene)
     {
         glm::mat4 curr_transform = aiCast(node->mTransformation);
         glm::mat4 total_transform = curr_transform * transform;
@@ -193,6 +163,35 @@ namespace Eagle
         }
     }
 
+	std::shared_ptr<MeshData> AssetManager::loadStaticMesh(const std::string& model_path)
+	{
+		return m_importer.loadObj(model_path);
+	}
+
+    void AssetManager::loadScene(const std::string& scene_path, const std::string& texture_path, std::shared_ptr<Scene> n_scene)
+    {
+        n_scene->cleanup();
+        //n_scene->m_directory = scene_path.substr(0, scene_path.find_last_of('/') + 1);
+        n_scene->m_directory = std::string("");
+        n_scene->m_texture_filp_vertically = true;
+        MaterialData n_mat;
+        n_mat.m_material_name = texture_path;
+        n_mat.m_base_color_texture_file = texture_path;
+        n_mat.m_specular_texture_file = std::string("");
+        n_mat.m_normal_texture_file = std::string("");
+        n_mat.m_emissive_texture_file = std::string("");
+        n_scene->m_materials[0] = n_mat;
+        auto mesh_ptr = loadStaticMesh(scene_path);
+        n_scene->m_meshes[0] = *mesh_ptr;
+        n_scene->m_material_meshes[0] = { 0 };
+        n_scene->m_transforms[0] = { glm::mat4(1.0f), glm::mat3(1.0f) };
+    }
+
+    void AssetManager::loadScene(const std::string& scene_path, std::shared_ptr<Scene> n_scene)
+    {
+        m_importer.loadFbxScene(scene_path, n_scene);
+    }
+
     void AssetManager::loadSceneJson(const std::string& json_path, std::shared_ptr<Scene> n_scene){
         std::string str = FileSystem::readFileToString(json_path);
 
@@ -201,7 +200,7 @@ namespace Eagle
 
         std::string scene_path = json_obj["models"][0]["file"].string_value();
         scene_path = json_path.substr(0, json_path.find_last_of('/') + 1) + scene_path;
-        loadScene(scene_path, n_scene);
+        m_importer.loadFbxScene(scene_path, n_scene);
 
         auto& dir_light = json_obj["lights"][0];
         auto it = dir_light["intensity"].array_items();

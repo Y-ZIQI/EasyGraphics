@@ -1,5 +1,7 @@
 #include "function/world/world_manager.h"
 
+#include "function/global/global_resource.h"
+
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -8,10 +10,10 @@
 
 namespace Eagle
 {
-	void WorldManager::loadScene(const std::string scene_path, std::shared_ptr<AssetManager> asset_manager)
+	void WorldManager::loadScene(const std::string scene_path)
 	{
 		m_current_scene = std::make_shared<Scene>();
-		asset_manager->loadScene(scene_path, m_current_scene);
+		g_global_resource.m_asset_manager->loadScene(scene_path, m_current_scene);
 
 		Camera n_camera({
 			glm::vec3(0.0f, 0.5f, 1.0f),
@@ -24,10 +26,10 @@ namespace Eagle
 		m_current_scene->m_current_camera = 0;
 	}
 
-	void WorldManager::loadSceneJson(const std::string json_path, std::shared_ptr<AssetManager> asset_manager)
+	void WorldManager::loadSceneJson(const std::string json_path)
 	{
 		m_current_scene = std::make_shared<Scene>();
-		asset_manager->loadSceneJson(json_path, m_current_scene);
+		g_global_resource.m_asset_manager->loadSceneJson(json_path, m_current_scene);
 
 		Camera n_camera({
 			glm::vec3(0.0f, 0.5f, 1.0f),
@@ -40,10 +42,10 @@ namespace Eagle
 		m_current_scene->m_current_camera = 0;
 	}
 
-	void WorldManager::loadObjSceneWithTexture(const std::string scene_path, const std::string texture_path, std::shared_ptr<AssetManager> asset_manager)
+	void WorldManager::loadObjSceneWithTexture(const std::string scene_path, const std::string texture_path)
 	{
 		m_current_scene = std::make_shared<Scene>();
-		asset_manager->loadScene(scene_path, texture_path, m_current_scene);
+		g_global_resource.m_asset_manager->loadScene(scene_path, texture_path, m_current_scene);
 
 		Camera n_camera({
 			glm::vec3(2.0f, 2.0f, 2.0f),

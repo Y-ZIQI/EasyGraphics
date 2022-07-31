@@ -1,9 +1,6 @@
 #include "function/render/render_resource.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
-#include <dds_image/include/dds.hpp>
+#include "function/global/global_resource.h"
 
 namespace Eagle
 {
@@ -84,64 +81,23 @@ namespace Eagle
     {
         std::shared_ptr<TextureData> texture = std::make_shared<TextureData>();
 
-        std::string extname = file.substr(file.rfind('.', file.size()) + 1);
-        if (extname == "dds") {
-            dds::Image image;
-            dds::readFile(file, &image);
-            texture->m_pixels = image.data.data();
+        auto image = g_global_resource.m_image_reader->readImage(file, is_srgb, vflip);
+        if (!image.data)
+            return nullptr;
+        texture->m_pixels = image.data;
+        texture->m_size = image.dataSize;
+        texture->m_width = image.width;
+        texture->m_height = image.height;
+        //texture->m_format = (is_srgb) ? EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_SRGB :
+        //    EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_UNORM; 
+        texture->m_format = image.format;
+        texture->m_depth = image.depth;
+        texture->m_array_layers = image.arraySize;
+        texture->m_mip_levels = image.numMips;
+        texture->m_alpha = image.supportsAlpha;
+        texture->m_type = image.type;
 
-            if (!texture->m_pixels)
-                return nullptr;
-
-            texture->m_width = image.width;
-            texture->m_height = image.height;
-            texture->m_format = (is_srgb) ? EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_SRGB :
-                EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_UNORM;
-            texture->m_depth = image.depth;
-            texture->m_array_layers = image.arraySize;
-            texture->m_mip_levels = 1;
-            texture->m_type = EAGLE_IMAGE_TYPE::EAGLE_IMAGE_TYPE_2D;
-
-            return texture;
-        }
-        /*if (file == "../Engine/resources/models/Arcade/Textures\\CheckerTile_BaseColor.png") {
-            dds::Image image;
-            dds::readFile(file, &image);
-            texture->m_pixels = image.data.data();
-
-            if (!texture->m_pixels)
-                return nullptr;
-
-            texture->m_width = image.width;
-            texture->m_height = image.height;
-            texture->m_format = (is_srgb) ? EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_SRGB :
-                EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_UNORM;
-            texture->m_depth = image.depth;
-            texture->m_array_layers = image.arraySize;
-            texture->m_mip_levels = 1;
-            texture->m_type = EAGLE_IMAGE_TYPE::EAGLE_IMAGE_TYPE_2D;
-
-            return texture;
-        }*/
-        else if (extname == "png") {
-            int iw, ih, n;
-            stbi_set_flip_vertically_on_load(vflip);
-            texture->m_pixels = stbi_load(file.c_str(), &iw, &ih, &n, 4);
-
-            if (!texture->m_pixels)
-                return nullptr;
-
-            texture->m_width = iw;
-            texture->m_height = ih;
-            texture->m_format = (is_srgb) ? EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_SRGB :
-                EAGLE_PIXEL_FORMAT::EAGLE_PIXEL_FORMAT_R8G8B8A8_UNORM;
-            texture->m_depth = 1;
-            texture->m_array_layers = 1;
-            texture->m_mip_levels = 1;
-            texture->m_type = EAGLE_IMAGE_TYPE::EAGLE_IMAGE_TYPE_2D;
-
-            return texture;
-        }
+        return texture;
     }
 
     std::shared_ptr<TextureData> RenderResource::loadTexture(const std::string& directory, const std::string& file, bool is_srgb, bool vflip)
@@ -155,9 +111,9 @@ namespace Eagle
     {
         RenderMaterialData ret;
         ret.m_base_color_texture = loadTexture(m_current_scene->m_directory, source.m_base_color_texture_file, true, vflip);
-        ret.m_specular_texture = loadTexture(m_current_scene->m_directory, source.m_specular_texture_file, true, vflip);
-        ret.m_normal_texture = loadTexture(m_current_scene->m_directory, source.m_normal_texture_file, true, vflip);
-        ret.m_emissive_texture = loadTexture(m_current_scene->m_directory, source.m_emissive_texture_file, true, vflip);
+        ret.m_specular_texture = loadTexture(m_current_scene->m_directory, source.m_specular_texture_file, false, vflip);
+        ret.m_normal_texture = loadTexture(m_current_scene->m_directory, source.m_normal_texture_file, false, vflip);
+        ret.m_emissive_texture = loadTexture(m_current_scene->m_directory, source.m_emissive_texture_file, false, vflip);
         return ret;
     }
 

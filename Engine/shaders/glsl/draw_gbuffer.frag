@@ -50,7 +50,7 @@ void main() {
         //vec2 normal_rg = texture(normal, fragTexCoord).rg;
         //N.z = sqrt(1.0 - clamp(dot(N, N), 0.0, 1.0));
         vec3 N = texture(normal, fragTexCoord).rgb;
-        N = pow(N, vec3(1.0 / 2.2));
+        // N = pow(N, vec3(1.0 / 2.2));
         N.xy = N.xy * 2.0 - 1.0;
         N = normalize(fragTBN * N);
         outNormal = vec4(N, 1.0);
